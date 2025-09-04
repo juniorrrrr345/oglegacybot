@@ -1,0 +1,239 @@
+<% 
+const body = `
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="bi bi-house"></i>
+        Dashboard
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.reload()">
+            <i class="bi bi-arrow-clockwise"></i>
+            Actualiser
+        </button>
+    </div>
+</div>
+
+<!-- Alertes de succès -->
+<% if (typeof success !== 'undefined' && success) { %>
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="bi bi-check-circle"></i>
+    Action effectuée avec succès !
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+<% } %>
+
+<!-- Statistiques principales -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title"><%= stats.usersCount %></h4>
+                        <p class="card-text">Utilisateurs Actifs</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-people display-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title"><%= stats.totalInteractions %></h4>
+                        <p class="card-text">Interactions Totales</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-chat-dots display-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title"><%= stats.startCommands %></h4>
+                        <p class="card-text">Commandes /start</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-play-circle display-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title"><%= stats.adminsCount %></h4>
+                        <p class="card-text">Administrateurs</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-person-badge display-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions rapides -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-lightning"></i>
+                    Actions Rapides
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-2 mb-2">
+                        <a href="/config" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-gear"></i><br>
+                            Configuration
+                        </a>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <a href="/social-networks" class="btn btn-outline-success w-100">
+                            <i class="bi bi-share"></i><br>
+                            Réseaux Sociaux
+                        </a>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <a href="/broadcast" class="btn btn-outline-warning w-100">
+                            <i class="bi bi-megaphone"></i><br>
+                            Diffusion
+                        </a>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <a href="/admins" class="btn btn-outline-info w-100">
+                            <i class="bi bi-people"></i><br>
+                            Administrateurs
+                        </a>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <a href="/stats" class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-graph-up"></i><br>
+                            Statistiques
+                        </a>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <button class="btn btn-outline-danger w-100" onclick="testBot()">
+                            <i class="bi bi-robot"></i><br>
+                            Test Bot
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Configuration actuelle -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    Configuration Actuelle
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <td><strong>Nom du bot :</strong></td>
+                            <td><%= config.bot_name || 'Non défini' %></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Message d'accueil :</strong></td>
+                            <td><%= (config.welcome_message || '').substring(0, 50) %>...</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Support :</strong></td>
+                            <td><%= config.support_contact || 'Non défini' %></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Réseaux sociaux :</strong></td>
+                            <td><%= stats.socialNetworks %> configurés</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-activity"></i>
+                    Activité Récente
+                </h5>
+            </div>
+            <div class="card-body">
+                <% if (recentStats.length === 0) { %>
+                <p class="text-muted">Aucune activité récente</p>
+                <% } else { %>
+                <div class="list-group list-group-flush">
+                    <% recentStats.slice(0, 5).forEach(stat => { %>
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong><%= stat.action %></strong><br>
+                                <small class="text-muted">@<%= stat.username || 'Anonyme' %></small>
+                            </div>
+                            <small class="text-muted">
+                                <%= moment(stat.created_at).fromNow() %>
+                            </small>
+                        </div>
+                    </div>
+                    <% }); %>
+                </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function testBot() {
+    if (confirm('Voulez-vous envoyer un message de test au bot ?')) {
+        alert('Fonctionnalité de test à implémenter');
+    }
+}
+
+// Auto-refresh des statistiques toutes les 30 secondes
+setInterval(async () => {
+    try {
+        const response = await fetch('/api/stats');
+        const stats = await response.json();
+        
+        // Mettre à jour les compteurs
+        document.querySelector('.bg-primary .card-title').textContent = stats.users;
+        document.querySelector('.bg-success .card-title').textContent = stats.interactions;
+        document.querySelector('.bg-info .card-title').textContent = stats.starts;
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour des stats:', error);
+    }
+}, 30000);
+</script>
+`
+%>
+
+<%- include('layout', { body: body, title: 'Dashboard', username: username }) %>

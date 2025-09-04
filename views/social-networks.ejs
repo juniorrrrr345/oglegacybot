@@ -1,0 +1,244 @@
+<% 
+const body = `
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="bi bi-share"></i>
+        Réseaux Sociaux
+    </h1>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSocialModal">
+        <i class="bi bi-plus"></i>
+        Ajouter un réseau
+    </button>
+</div>
+
+<!-- Alertes de succès -->
+<% if (success) { %>
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="bi bi-check-circle"></i>
+    Action effectuée avec succès !
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+<% } %>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-list"></i>
+                    Réseaux Sociaux Configurés
+                </h5>
+            </div>
+            <div class="card-body">
+                <% if (socialNetworks.length === 0) { %>
+                <div class="text-center py-5">
+                    <i class="bi bi-share display-1 text-muted"></i>
+                    <h4 class="text-muted">Aucun réseau social configuré</h4>
+                    <p class="text-muted">Ajoutez vos premiers réseaux sociaux pour les afficher dans le bot</p>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSocialModal">
+                        <i class="bi bi-plus"></i>
+                        Ajouter le premier réseau
+                    </button>
+                </div>
+                <% } else { %>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Ordre</th>
+                                <th>Icône</th>
+                                <th>Nom</th>
+                                <th>URL</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% socialNetworks.forEach(social => { %>
+                            <tr>
+                                <td><span class="badge bg-secondary"><%= social.order_position %></span></td>
+                                <td><span class="social-icon bg-light"><%= social.icon %></span></td>
+                                <td><strong><%= social.name %></strong></td>
+                                <td>
+                                    <a href="<%= social.url %>" target="_blank" class="text-decoration-none">
+                                        <%= social.url.length > 40 ? social.url.substring(0, 40) + '...' : social.url %>
+                                        <i class="bi bi-box-arrow-up-right"></i>
+                                    </a>
+                                </td>
+                                <td>
+                                    <% if (social.is_active) { %>
+                                    <span class="badge bg-success">Actif</span>
+                                    <% } else { %>
+                                    <span class="badge bg-secondary">Inactif</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button type="button" class="btn btn-outline-primary" 
+                                                onclick="editSocial(<%= social.id %>, '<%= social.name %>', '<%= social.url %>', '<%= social.icon %>', <%= social.is_active %>, <%= social.order_position %>)">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger" 
+                                                onclick="deleteSocial(<%= social.id %>, '<%= social.name %>')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajouter un réseau social -->
+<div class="modal fade" id="addSocialModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-plus"></i>
+                    Ajouter un Réseau Social
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="/social-networks">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nom du Réseau</label>
+                        <input type="text" class="form-control" id="name" name="name" required 
+                               placeholder="Ex: Instagram, Twitter, YouTube...">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="url" class="form-label">URL</label>
+                        <input type="url" class="form-control" id="url" name="url" required 
+                               placeholder="https://instagram.com/votre_compte">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="icon" class="form-label">Icône (Emoji)</label>
+                        <input type="text" class="form-control" id="icon" name="icon" required 
+                               placeholder="📸" maxlength="2">
+                        <div class="form-text">Choisissez un emoji représentant le réseau social</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="order_position" class="form-label">Position d'Affichage</label>
+                        <input type="number" class="form-control" id="order_position" name="order_position" 
+                               value="<%= socialNetworks.length + 1 %>" min="1">
+                        <div class="form-text">Ordre d'affichage dans le bot (1 = premier)</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i>
+                        Ajouter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modifier un réseau social -->
+<div class="modal fade" id="editSocialModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-pencil"></i>
+                    Modifier le Réseau Social
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editSocialForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_name" class="form-label">Nom du Réseau</label>
+                        <input type="text" class="form-control" id="edit_name" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_url" class="form-label">URL</label>
+                        <input type="url" class="form-control" id="edit_url" name="url" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_icon" class="form-label">Icône (Emoji)</label>
+                        <input type="text" class="form-control" id="edit_icon" name="icon" required maxlength="2">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_order_position" class="form-label">Position d'Affichage</label>
+                        <input type="number" class="form-control" id="edit_order_position" name="order_position" min="1">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="edit_is_active" name="is_active">
+                            <label class="form-check-label" for="edit_is_active">
+                                Actif (visible dans le bot)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i>
+                        Sauvegarder
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function editSocial(id, name, url, icon, isActive, orderPosition) {
+    document.getElementById('edit_name').value = name;
+    document.getElementById('edit_url').value = url;
+    document.getElementById('edit_icon').value = icon;
+    document.getElementById('edit_order_position').value = orderPosition;
+    document.getElementById('edit_is_active').checked = isActive === 1;
+    
+    document.getElementById('editSocialForm').action = '/social-networks/' + id + '/edit';
+    
+    const modal = new bootstrap.Modal(document.getElementById('editSocialModal'));
+    modal.show();
+}
+
+function deleteSocial(id, name) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer le réseau social "' + name + '" ?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/social-networks/' + id + '/delete';
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Aperçu de l'icône en temps réel
+document.getElementById('icon').addEventListener('input', function() {
+    // Validation simple pour s'assurer que c'est un emoji
+    if (this.value.length > 2) {
+        this.value = this.value.substring(0, 2);
+    }
+});
+
+document.getElementById('edit_icon').addEventListener('input', function() {
+    if (this.value.length > 2) {
+        this.value = this.value.substring(0, 2);
+    }
+});
+</script>
+`
+%>
+
+<%- include('layout', { body: body, title: 'Réseaux Sociaux', username: username }) %>

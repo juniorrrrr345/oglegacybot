@@ -1,0 +1,175 @@
+<% 
+const body = `
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="bi bi-gear"></i>
+        Configuration Générale
+    </h1>
+</div>
+
+<!-- Alertes de succès -->
+<% if (success) { %>
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="bi bi-check-circle"></i>
+    Configuration sauvegardée avec succès !
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+<% } %>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-sliders"></i>
+                    Paramètres du Bot
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/config">
+                    <div class="mb-3">
+                        <label for="bot_name" class="form-label">Nom du Bot</label>
+                        <input type="text" class="form-control" id="bot_name" name="bot_name" 
+                               value="<%= config.bot_name || '' %>" placeholder="Mon Bot Telegram">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="bot_description" class="form-label">Description du Bot</label>
+                        <textarea class="form-control" id="bot_description" name="bot_description" 
+                                  rows="3" placeholder="Description de votre bot"><%= config.bot_description || '' %></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="welcome_message" class="form-label">Message d'Accueil</label>
+                        <textarea class="form-control" id="welcome_message" name="welcome_message" 
+                                  rows="4" required><%= config.welcome_message || '' %></textarea>
+                        <div class="form-text">Ce message sera affiché quand un utilisateur tape /start</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="support_contact" class="form-label">Contact Support</label>
+                        <input type="text" class="form-control" id="support_contact" name="support_contact" 
+                               value="<%= config.support_contact || '' %>" placeholder="@support">
+                        <div class="form-text">Username Telegram ou lien de contact</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="mini_app_url" class="form-label">URL Mini Application</label>
+                        <input type="url" class="form-control" id="mini_app_url" name="mini_app_url" 
+                               value="<%= config.mini_app_url || '' %>" placeholder="https://votre-app.com">
+                        <div class="form-text">URL de votre mini application Telegram (optionnel)</div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i>
+                            Sauvegarder la Configuration
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Photo d'accueil -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-image"></i>
+                    Photo d'Accueil
+                </h6>
+            </div>
+            <div class="card-body">
+                <% if (config.welcome_photo) { %>
+                <div class="text-center mb-3">
+                    <img src="/uploads/<%= config.welcome_photo.split('/').pop() %>" 
+                         class="img-fluid rounded" style="max-height: 200px;">
+                </div>
+                <% } %>
+                
+                <form id="photoForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <input type="file" class="form-control" id="welcome_photo" 
+                               accept="image/*" onchange="uploadPhoto()">
+                        <div class="form-text">JPG, PNG, GIF - Max 5MB</div>
+                    </div>
+                </form>
+                
+                <div id="uploadStatus"></div>
+            </div>
+        </div>
+
+        <!-- Aperçu -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-eye"></i>
+                    Aperçu Message /start
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="border rounded p-3" style="background-color: #f8f9fa;">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" 
+                             style="width: 40px; height: 40px;">
+                            <i class="bi bi-robot"></i>
+                        </div>
+                        <div class="ms-2">
+                            <strong><%= config.bot_name || 'Mon Bot' %></strong>
+                        </div>
+                    </div>
+                    <div class="message-preview">
+                        <%= config.welcome_message || 'Message d\'accueil non défini' %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function uploadPhoto() {
+    const fileInput = document.getElementById('welcome_photo');
+    const statusDiv = document.getElementById('uploadStatus');
+    
+    if (!fileInput.files[0]) return;
+    
+    const formData = new FormData();
+    formData.append('welcome_photo', fileInput.files[0]);
+    
+    statusDiv.innerHTML = '<div class="alert alert-info">Upload en cours...</div>';
+    
+    try {
+        const response = await fetch('/upload-welcome-photo', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            statusDiv.innerHTML = '<div class="alert alert-success">Photo uploadée avec succès!</div>';
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            statusDiv.innerHTML = '<div class="alert alert-danger">Erreur: ' + result.error + '</div>';
+        }
+    } catch (error) {
+        statusDiv.innerHTML = '<div class="alert alert-danger">Erreur lors de l\\'upload</div>';
+    }
+}
+
+// Aperçu en temps réel
+document.getElementById('welcome_message').addEventListener('input', function() {
+    document.querySelector('.message-preview').textContent = this.value || 'Message d\\'accueil non défini';
+});
+
+document.getElementById('bot_name').addEventListener('input', function() {
+    document.querySelector('.message-preview').previousElementSibling.querySelector('strong').textContent = 
+        this.value || 'Mon Bot';
+});
+</script>
+`
+%>
+
+<%- include('layout', { body: body, title: 'Configuration', username: username }) %>

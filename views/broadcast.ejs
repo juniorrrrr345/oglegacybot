@@ -1,0 +1,278 @@
+<% 
+const body = `
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="bi bi-megaphone"></i>
+        Diffusion de Messages
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="badge bg-info fs-6">
+            <i class="bi bi-people"></i>
+            <%= usersCount %> utilisateurs actifs
+        </div>
+    </div>
+</div>
+
+<!-- Alertes de succès -->
+<% if (success) { %>
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="bi bi-check-circle"></i>
+    Message envoyé en diffusion ! Il sera délivré progressivement à tous les utilisateurs.
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+<% } %>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-send"></i>
+                    Nouveau Message de Diffusion
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/broadcast">
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Message à Diffuser</label>
+                        <textarea class="form-control" id="message" name="message" rows="6" required 
+                                  placeholder="Tapez votre message ici...&#10;&#10;Vous pouvez utiliser des emojis 🎉&#10;Et même des retours à la ligne !"></textarea>
+                        <div class="form-text">
+                            <span id="charCount">0</span>/4096 caractères
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Attention :</strong> Ce message sera envoyé à tous les <strong><%= usersCount %></strong> utilisateurs actifs du bot.
+                            Cette action ne peut pas être annulée une fois démarrée.
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" onclick="return confirmBroadcast()">
+                            <i class="bi bi-megaphone"></i>
+                            Envoyer à Tous les Utilisateurs
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-eye"></i>
+                    Aperçu du Message
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="border rounded p-3" style="background-color: #f8f9fa;">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" 
+                             style="width: 40px; height: 40px;">
+                            <i class="bi bi-robot"></i>
+                        </div>
+                        <div class="ms-2">
+                            <strong>Votre Bot</strong>
+                            <br><small class="text-muted">maintenant</small>
+                        </div>
+                    </div>
+                    <div id="messagePreview" class="message-preview">
+                        Tapez votre message pour voir l'aperçu...
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    Conseils
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="bi bi-check text-success"></i>
+                        Utilisez des emojis pour rendre votre message plus attrayant
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check text-success"></i>
+                        Gardez vos messages concis et clairs
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check text-success"></i>
+                        Testez d'abord avec votre propre compte
+                    </li>
+                    <li class="mb-0">
+                        <i class="bi bi-check text-success"></i>
+                        Évitez les messages trop fréquents
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Historique des diffusions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-clock-history"></i>
+                    Historique des Diffusions
+                </h5>
+            </div>
+            <div class="card-body">
+                <% if (broadcasts.length === 0) { %>
+                <div class="text-center py-4">
+                    <i class="bi bi-inbox display-4 text-muted"></i>
+                    <h5 class="text-muted mt-2">Aucune diffusion effectuée</h5>
+                    <p class="text-muted">Vos messages de diffusion apparaîtront ici</p>
+                </div>
+                <% } else { %>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Message</th>
+                                <th>Envoyés</th>
+                                <th>Statut</th>
+                                <th>Créé par</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% broadcasts.forEach(broadcast => { %>
+                            <tr>
+                                <td>
+                                    <small><%= moment(broadcast.created_at).format('DD/MM/YYYY HH:mm') %></small>
+                                </td>
+                                <td>
+                                    <div class="text-truncate-2" style="max-width: 300px;">
+                                        <%= broadcast.message.substring(0, 100) %>
+                                        <% if (broadcast.message.length > 100) { %>...<% } %>
+                                    </div>
+                                </td>
+                                <td>
+                                    <% if (broadcast.status === 'completed') { %>
+                                    <span class="badge bg-success">
+                                        <%= broadcast.sent_count %>/<%= broadcast.total_users %>
+                                    </span>
+                                    <% } else if (broadcast.status === 'pending') { %>
+                                    <span class="badge bg-warning">En cours...</span>
+                                    <% } else { %>
+                                    <span class="badge bg-danger">Erreur</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (broadcast.status === 'completed') { %>
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i> Terminé
+                                    </span>
+                                    <% } else if (broadcast.status === 'pending') { %>
+                                    <span class="badge bg-warning">
+                                        <i class="bi bi-clock"></i> En cours
+                                    </span>
+                                    <% } else { %>
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-x-circle"></i> Erreur
+                                    </span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <small><%= broadcast.created_by || 'Système' %></small>
+                                </td>
+                            </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Aperçu du message en temps réel
+document.getElementById('message').addEventListener('input', function() {
+    const message = this.value;
+    const preview = document.getElementById('messagePreview');
+    const charCount = document.getElementById('charCount');
+    
+    // Mettre à jour l'aperçu
+    if (message.trim()) {
+        preview.textContent = message;
+    } else {
+        preview.textContent = 'Tapez votre message pour voir l\\'aperçu...';
+    }
+    
+    // Mettre à jour le compteur de caractères
+    charCount.textContent = message.length;
+    
+    // Changer la couleur si on approche de la limite
+    if (message.length > 3500) {
+        charCount.className = 'text-warning';
+    } else if (message.length > 4000) {
+        charCount.className = 'text-danger';
+    } else {
+        charCount.className = '';
+    }
+    
+    // Limiter à 4096 caractères (limite Telegram)
+    if (message.length > 4096) {
+        this.value = message.substring(0, 4096);
+        charCount.textContent = '4096';
+        charCount.className = 'text-danger';
+    }
+});
+
+// Confirmation avant envoi
+function confirmBroadcast() {
+    const message = document.getElementById('message').value.trim();
+    
+    if (!message) {
+        alert('Veuillez saisir un message avant d\\'envoyer.');
+        return false;
+    }
+    
+    const userCount = <%= usersCount %>;
+    
+    return confirm(
+        'Êtes-vous sûr de vouloir envoyer ce message à tous les ' + userCount + ' utilisateurs ?\\n\\n' +
+        'Cette action ne peut pas être annulée une fois démarrée.\\n\\n' +
+        'Message à envoyer :\\n' + message.substring(0, 100) + 
+        (message.length > 100 ? '...' : '')
+    );
+}
+
+// Sauvegarder le brouillon dans le localStorage
+document.getElementById('message').addEventListener('input', function() {
+    localStorage.setItem('broadcast_draft', this.value);
+});
+
+// Restaurer le brouillon au chargement
+document.addEventListener('DOMContentLoaded', function() {
+    const draft = localStorage.getItem('broadcast_draft');
+    if (draft) {
+        document.getElementById('message').value = draft;
+        document.getElementById('message').dispatchEvent(new Event('input'));
+    }
+});
+
+// Nettoyer le brouillon après envoi réussi
+<% if (success) { %>
+localStorage.removeItem('broadcast_draft');
+<% } %>
+</script>
+`
+%>
+
+<%- include('layout', { body: body, title: 'Diffusion', username: username }) %>

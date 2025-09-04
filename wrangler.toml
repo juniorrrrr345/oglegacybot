@@ -1,0 +1,11 @@
+name = "telegram-bot-admin"
+main = "src/worker.js"
+compatibility_date = "2023-12-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "botog"
+database_id = "fe5c3cd2-78a5-41c5-92b9-0d8648e61c22"
+
+[vars]
+ENVIRONMENT = "production"
