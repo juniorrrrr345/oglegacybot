@@ -67,11 +67,16 @@ async function sendOrEditMessage(chatId, text, keyboard = null, parseMode = 'HTM
                 message_id: messageId,
                 ...options
             });
-            return result;
+            return { message_id: messageId };
         }
     } catch (error) {
-        // Si l'édition échoue, envoyer un nouveau message
-        console.log('Édition échouée, envoi d\'un nouveau message');
+        // Si l'édition échoue, supprimer l'ancien message et en envoyer un nouveau
+        console.log('Édition échouée, suppression et envoi d\'un nouveau message');
+        try {
+            await bot.deleteMessage(chatId, messageId);
+        } catch (deleteError) {
+            // Ignorer si la suppression échoue
+        }
     }
 
     // Envoyer un nouveau message
@@ -102,7 +107,12 @@ async function sendOrEditPhoto(chatId, photo, caption, keyboard = null, messageI
             return { message_id: messageId };
         }
     } catch (error) {
-        console.log('Édition de photo échouée, envoi d\'une nouvelle photo');
+        console.log('Édition de photo échouée, suppression et envoi d\'une nouvelle photo');
+        try {
+            await bot.deleteMessage(chatId, messageId);
+        } catch (deleteError) {
+            // Ignorer si la suppression échoue
+        }
     }
 
     return await bot.sendPhoto(chatId, photo, options);
@@ -288,10 +298,16 @@ bot.on('callback_query', async (query) => {
             
             
             // Envoyer le message
+            let result;
             if (config.welcome_image) {
-                await sendOrEditPhoto(chatId, config.welcome_image, welcomeText, keyboard, messageId);
+                result = await sendOrEditPhoto(chatId, config.welcome_image, welcomeText, keyboard, messageId);
             } else {
-                await sendOrEditMessage(chatId, welcomeText, keyboard, 'HTML', messageId);
+                result = await sendOrEditMessage(chatId, welcomeText, keyboard, 'HTML', messageId);
+            }
+            
+            // Mettre à jour le messageId si un nouveau message a été créé
+            if (result && result.message_id) {
+                userStates.set(userId, { ...state, messageId: result.message_id });
             }
             break;
             
@@ -478,10 +494,16 @@ async function showService(chatId, userId, serviceType, messageId) {
     
     const state = userStates.get(userId) || {};
     
+    let result;
     if (image) {
-        await sendOrEditPhoto(chatId, image, text, keyboard, messageId);
+        result = await sendOrEditPhoto(chatId, image, text, keyboard, messageId);
     } else {
-        await sendOrEditMessage(chatId, text, keyboard, 'HTML', messageId);
+        result = await sendOrEditMessage(chatId, text, keyboard, 'HTML', messageId);
+    }
+    
+    // Mettre à jour le messageId si un nouveau message a été créé
+    if (result && result.message_id) {
+        userStates.set(userId, { ...state, messageId: result.message_id });
     }
 }
 
@@ -1240,10 +1262,16 @@ async function showSubmenuContent(chatId, userId, submenuId, messageId) {
     const keyboard = [[{ text: '🔙 Retour', callback_data: serviceCallback }]];
     const state = userStates.get(userId) || {};
     
+    let result;
     if (submenu.image) {
-        await sendOrEditPhoto(chatId, submenu.image, submenu.text || submenu.name, keyboard, messageId);
+        result = await sendOrEditPhoto(chatId, submenu.image, submenu.text || submenu.name, keyboard, messageId);
     } else {
-        await sendOrEditMessage(chatId, submenu.text || submenu.name, keyboard, 'HTML', messageId);
+        result = await sendOrEditMessage(chatId, submenu.text || submenu.name, keyboard, 'HTML', messageId);
+    }
+    
+    // Mettre à jour le messageId si un nouveau message a été créé
+    if (result && result.message_id) {
+        userStates.set(userId, { ...state, messageId: result.message_id });
     }
 }
 
