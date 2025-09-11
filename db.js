@@ -75,6 +75,16 @@ class D1Database {
         return Array.from(this.mockData.users.values()).filter(u => u.is_admin === 1);
     }
 
+    async setAdmin(userId, isAdmin) {
+        // En production: await DB.prepare("UPDATE users SET is_admin = ? WHERE user_id = ?").bind(isAdmin ? 1 : 0, userId).run();
+        const user = this.mockData.users.get(userId);
+        if (user) {
+            user.is_admin = isAdmin ? 1 : 0;
+            return true;
+        }
+        return false;
+    }
+
     // Réseaux sociaux
     async getSocialNetworks() {
         // En production: const { results } = await DB.prepare("SELECT * FROM social_networks WHERE is_active = 1 ORDER BY position").all();

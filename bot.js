@@ -577,6 +577,190 @@ async function handleOtherCallbacks(query) {
             messageId
         );
     }
+    
+    // Ajouter un sous-menu
+    else if (data.startsWith('add_submenu_')) {
+        const serviceType = data.replace('add_submenu_', '');
+        userStates.set(userId, { ...state, state: 'adding_submenu_name', serviceType });
+        await sendOrEditMessage(
+            chatId,
+            '➕ <b>Ajouter un sous-menu</b>\n\n' +
+            'Envoyez le nom du sous-menu:',
+            [[{ text: '❌ Annuler', callback_data: `manage_submenus_${serviceType}` }]],
+            'HTML',
+            messageId
+        );
+    }
+    
+    // Éditer un sous-menu
+    else if (data.startsWith('edit_submenu_')) {
+        const parts = data.split('_');
+        const serviceType = parts[2];
+        const submenuId = parts[3];
+        await showSubmenuEditMenu(chatId, userId, serviceType, submenuId, messageId);
+    }
+    
+    // Supprimer un sous-menu
+    else if (data.startsWith('delete_submenu_')) {
+        const submenuId = data.replace('delete_submenu_', '');
+        await db.deleteSubmenu(submenuId);
+        await sendOrEditMessage(
+            chatId,
+            '✅ Sous-menu supprimé !',
+            [[{ text: '🔙 Retour', callback_data: 'admin_services' }]],
+            'HTML',
+            messageId
+        );
+    }
+    
+    // Modifier nom réseau social
+    else if (data.startsWith('edit_social_name_')) {
+        const socialId = data.replace('edit_social_name_', '');
+        userStates.set(userId, { ...state, state: 'editing_social_name', socialId });
+        await sendOrEditMessage(
+            chatId,
+            '✏️ Envoyez le nouveau nom:',
+            [[{ text: '❌ Annuler', callback_data: `edit_social_${socialId}` }]],
+            'HTML',
+            messageId
+        );
+    }
+    
+    // Modifier emoji réseau social
+    else if (data.startsWith('edit_social_emoji_')) {
+        const socialId = data.replace('edit_social_emoji_', '');
+        userStates.set(userId, { ...state, state: 'editing_social_emoji', socialId });
+        await sendOrEditMessage(
+            chatId,
+            '😀 Envoyez le nouvel emoji:',
+            [[{ text: '❌ Annuler', callback_data: `edit_social_${socialId}` }]],
+            'HTML',
+            messageId
+        );
+    }
+    
+    // Modifier URL réseau social
+    else if (data.startsWith('edit_social_url_')) {
+        const socialId = data.replace('edit_social_url_', '');
+        userStates.set(userId, { ...state, state: 'editing_social_url', socialId });
+        await sendOrEditMessage(
+            chatId,
+            '🔗 Envoyez la nouvelle URL:',
+            [[{ text: '❌ Annuler', callback_data: `edit_social_${socialId}` }]],
+            'HTML',
+            messageId
+        );
+    }
+    
+    // Supprimer réseau social
+    else if (data.startsWith('delete_social_')) {
+        const socialId = data.replace('delete_social_', '');
+        await db.deleteSocialNetwork(socialId);
+        await sendOrEditMessage(
+            chatId,
+            '✅ Réseau social supprimé !',
+            [[{ text: '🔙 Retour', callback_data: 'admin_social' }]],
+            'HTML',
+            messageId
+        );
+    }
+    
+    // Ajouter un admin
+    else if (data === 'add_admin') {
+        userStates.set(userId, { ...state, state: 'adding_admin' });
+        await sendOrEditMessage(
+            chatId,
+            '➕ <b>Ajouter un administrateur</b>\n\n' +
+            'Envoyez l\'ID Telegram ou le @username de l\'utilisateur:',
+            [[{ text: '❌ Annuler', callback_data: 'admin_manage' }]],
+            'HTML',
+            messageId
+        );
+    }
+    
+    // Retirer un admin
+    else if (data === 'remove_admin') {
+        const admins = await db.getAdmins();
+        const keyboard = [];
+        
+        for (const admin of admins) {
+            if (admin.user_id.toString() !== process.env.ADMIN_ID) {
+                keyboard.push([{ 
+                    text: `❌ ${admin.first_name || 'Admin'} (@${admin.username || admin.user_id})`, 
+                    callback_data: `confirm_remove_admin_${admin.user_id}` 
+                }]);
+            }
+        }
+        
+        keyboard.push([{ text: '🔙 Retour', callback_data: 'admin_manage' }]);
+        
+        await sendOrEditMessage(
+            chatId,
+            '❌ <b>Retirer un administrateur</b>\n\n' +
+            'Sélectionnez l\'admin à retirer:',
+            keyboard,
+            'HTML',
+            messageId
+        );
+    }
+    
+    // Confirmer suppression admin
+    else if (data.startsWith('confirm_remove_admin_')) {
+        const adminId = parseInt(data.replace('confirm_remove_admin_', ''));
+        await db.setAdmin(adminId, false);
+        await sendOrEditMessage(
+            chatId,
+            '✅ Administrateur retiré !',
+            [[{ text: '🔙 Retour', callback_data: 'admin_manage' }]],
+            'HTML',
+            messageId
+        );
+    }
+    
+    // Modifier nom d'un sous-menu
+    else if (data.startsWith('edit_submenu_name_')) {
+        const parts = data.split('_');
+        const serviceType = parts[3];
+        const submenuId = parts[4];
+        userStates.set(userId, { ...state, state: 'editing_submenu_name', submenuId, serviceType });
+        await sendOrEditMessage(
+            chatId,
+            '✏️ Envoyez le nouveau nom du sous-menu:',
+            [[{ text: '❌ Annuler', callback_data: `edit_submenu_${serviceType}_${submenuId}` }]],
+            'HTML',
+            messageId
+        );
+    }
+    
+    // Modifier texte d'un sous-menu
+    else if (data.startsWith('edit_submenu_text_')) {
+        const parts = data.split('_');
+        const serviceType = parts[3];
+        const submenuId = parts[4];
+        userStates.set(userId, { ...state, state: 'editing_submenu_text', submenuId, serviceType });
+        await sendOrEditMessage(
+            chatId,
+            '📝 Envoyez le nouveau texte du sous-menu:',
+            [[{ text: '❌ Annuler', callback_data: `edit_submenu_${serviceType}_${submenuId}` }]],
+            'HTML',
+            messageId
+        );
+    }
+    
+    // Modifier photo d'un sous-menu
+    else if (data.startsWith('edit_submenu_photo_')) {
+        const parts = data.split('_');
+        const serviceType = parts[3];
+        const submenuId = parts[4];
+        userStates.set(userId, { ...state, state: 'editing_submenu_photo', submenuId, serviceType });
+        await sendOrEditMessage(
+            chatId,
+            '🖼️ Envoyez la nouvelle photo du sous-menu:',
+            [[{ text: '❌ Annuler', callback_data: `edit_submenu_${serviceType}_${submenuId}` }]],
+            'HTML',
+            messageId
+        );
+    }
 }
 
 // Gestion des messages texte
@@ -715,6 +899,147 @@ bot.on('message', async (msg) => {
             state.messageId
         );
     }
+    
+    // Gestion de l'ajout de sous-menu
+    else if (state.state === 'adding_submenu_name') {
+        state.submenuName = msg.text;
+        state.state = 'adding_submenu_text';
+        userStates.set(userId, state);
+        
+        await sendOrEditMessage(
+            chatId,
+            `📋 <b>${msg.text}</b>\n\n` +
+            'Envoyez le texte/description du sous-menu:',
+            [[{ text: '❌ Annuler', callback_data: `manage_submenus_${state.serviceType}` }]],
+            'HTML',
+            state.messageId
+        );
+    }
+    
+    else if (state.state === 'adding_submenu_text') {
+        const fullServiceType = state.serviceType === 'liv' ? 'livraison' : 
+                               state.serviceType === 'pos' ? 'postal' : 'meetup';
+        await db.addSubmenu(fullServiceType, state.submenuName, msg.text, null);
+        delete state.state;
+        delete state.submenuName;
+        delete state.serviceType;
+        
+        await sendOrEditMessage(
+            chatId,
+            '✅ Sous-menu ajouté !',
+            [[{ text: '🔙 Retour', callback_data: 'admin_services' }]],
+            'HTML',
+            state.messageId
+        );
+    }
+    
+    // Gestion de la modification des réseaux sociaux
+    else if (state.state === 'editing_social_name') {
+        await db.updateSocialNetwork(state.socialId, { name: msg.text });
+        delete state.state;
+        delete state.socialId;
+        
+        await sendOrEditMessage(
+            chatId,
+            '✅ Nom du réseau social mis à jour !',
+            [[{ text: '🔙 Retour', callback_data: 'admin_social' }]],
+            'HTML',
+            state.messageId
+        );
+    }
+    
+    else if (state.state === 'editing_social_emoji') {
+        await db.updateSocialNetwork(state.socialId, { emoji: msg.text });
+        delete state.state;
+        delete state.socialId;
+        
+        await sendOrEditMessage(
+            chatId,
+            '✅ Emoji du réseau social mis à jour !',
+            [[{ text: '🔙 Retour', callback_data: 'admin_social' }]],
+            'HTML',
+            state.messageId
+        );
+    }
+    
+    else if (state.state === 'editing_social_url') {
+        await db.updateSocialNetwork(state.socialId, { url: msg.text });
+        delete state.state;
+        delete state.socialId;
+        
+        await sendOrEditMessage(
+            chatId,
+            '✅ URL du réseau social mise à jour !',
+            [[{ text: '🔙 Retour', callback_data: 'admin_social' }]],
+            'HTML',
+            state.messageId
+        );
+    }
+    
+    // Gestion de l'ajout d'admin
+    else if (state.state === 'adding_admin') {
+        let newAdminId;
+        
+        // Si c'est un username
+        if (msg.text.startsWith('@')) {
+            const username = msg.text.substring(1);
+            const users = await db.getAllUsers();
+            const user = users.find(u => u.username === username);
+            
+            if (user) {
+                newAdminId = user.user_id;
+            } else {
+                await sendOrEditMessage(
+                    chatId,
+                    '❌ Utilisateur non trouvé. Il doit d\'abord utiliser le bot.',
+                    [[{ text: '🔙 Retour', callback_data: 'admin_manage' }]],
+                    'HTML',
+                    state.messageId
+                );
+                delete state.state;
+                return;
+            }
+        } else {
+            // C'est un ID
+            newAdminId = parseInt(msg.text);
+        }
+        
+        await db.setAdmin(newAdminId, true);
+        delete state.state;
+        
+        await sendOrEditMessage(
+            chatId,
+            '✅ Nouvel administrateur ajouté !',
+            [[{ text: '🔙 Retour', callback_data: 'admin_manage' }]],
+            'HTML',
+            state.messageId
+        );
+    }
+    
+    // Gestion de la modification des sous-menus
+    else if (state.state && state.state.startsWith('editing_submenu_')) {
+        const parts = state.state.split('_');
+        const field = parts[2]; // name, text, etc.
+        const submenuId = state.submenuId;
+        
+        if (field === 'name') {
+            await db.updateSubmenu(submenuId, { name: msg.text });
+        } else if (field === 'text') {
+            await db.updateSubmenu(submenuId, { text: msg.text });
+        }
+        
+        delete state.state;
+        delete state.submenuId;
+        delete state.serviceType;
+        
+        await sendOrEditMessage(
+            chatId,
+            '✅ Sous-menu mis à jour !',
+            [[{ text: '🔙 Retour', callback_data: 'admin_services' }]],
+            'HTML',
+            state.messageId
+        );
+    }
 });
 
 // Gestion des photos
@@ -752,6 +1077,22 @@ bot.on('photo', async (msg) => {
             chatId,
             '✅ Photo du service mise à jour !',
             [[{ text: '🔙 Retour', callback_data: `edit_service_${serviceType}` }]],
+            'HTML',
+            state.messageId
+        );
+    }
+    
+    // Photo d'un sous-menu
+    else if (state.state === 'editing_submenu_photo') {
+        await db.updateSubmenu(state.submenuId, { image: photo });
+        delete state.state;
+        delete state.submenuId;
+        delete state.serviceType;
+        
+        await sendOrEditMessage(
+            chatId,
+            '✅ Photo du sous-menu mise à jour !',
+            [[{ text: '🔙 Retour', callback_data: 'admin_services' }]],
             'HTML',
             state.messageId
         );
@@ -838,6 +1179,38 @@ async function showSocialEditMenu(chatId, userId, socialId, messageId) {
             [{ text: '🔗 Modifier l\'URL', callback_data: `edit_social_url_${socialId}` }],
             [{ text: '🗑️ Supprimer', callback_data: `delete_social_${socialId}` }],
             [{ text: '🔙 Retour', callback_data: 'admin_social' }]
+        ],
+        'HTML',
+        messageId
+    );
+}
+
+// Menu d'édition d'un sous-menu
+async function showSubmenuEditMenu(chatId, userId, serviceType, submenuId, messageId) {
+    const submenu = await db.getSubmenu(submenuId);
+    
+    if (!submenu) {
+        await sendOrEditMessage(
+            chatId,
+            '❌ Sous-menu non trouvé',
+            [[{ text: '🔙 Retour', callback_data: `manage_submenus_${serviceType}` }]],
+            'HTML',
+            messageId
+        );
+        return;
+    }
+    
+    await sendOrEditMessage(
+        chatId,
+        `📋 <b>${submenu.name}</b>\n\n` +
+        `Service: ${submenu.service_type}\n` +
+        `Position: ${submenu.position}`,
+        [
+            [{ text: '✏️ Modifier le nom', callback_data: `edit_submenu_name_${serviceType}_${submenuId}` }],
+            [{ text: '📝 Modifier le texte', callback_data: `edit_submenu_text_${serviceType}_${submenuId}` }],
+            [{ text: '🖼️ Modifier la photo', callback_data: `edit_submenu_photo_${serviceType}_${submenuId}` }],
+            [{ text: '🗑️ Supprimer', callback_data: `delete_submenu_${submenuId}` }],
+            [{ text: '🔙 Retour', callback_data: `manage_submenus_${serviceType}` }]
         ],
         'HTML',
         messageId
