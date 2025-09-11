@@ -212,7 +212,7 @@ bot.onText(/\/admin/, async (msg) => {
 });
 
 // Afficher le menu admin
-async function showAdminMenu(chatId, userId) {
+async function showAdminMenu(chatId, userId, messageId = null) {
     const config = await db.getConfig();
     const stats = await db.getStats();
     
@@ -232,12 +232,9 @@ async function showAdminMenu(chatId, userId) {
                  `📊 Démarrages: ${stats.totalStarts}\n` +
                  `👨‍💼 Admins: ${stats.totalAdmins}`;
     
-    const result = await bot.sendMessage(chatId, text, {
-        parse_mode: 'HTML',
-        reply_markup: { inline_keyboard: keyboard }
-    });
-    
-    userStates.set(userId, { messageId: result.message_id });
+    const state = userStates.get(userId) || {};
+    const result = await sendOrEditMessage(chatId, text, keyboard, 'HTML', messageId || state.messageId);
+    userStates.set(userId, { ...state, messageId: result.message_id });
 }
 
 // Gestion des callbacks
@@ -315,24 +312,7 @@ bot.on('callback_query', async (query) => {
         // Admin
         case 'admin_back':
             if (await isAdmin(userId)) {
-                const stats = await db.getStats();
-                const keyboard = [
-                    [{ text: '✏️ Message d\'accueil', callback_data: 'admin_welcome' }],
-                    [{ text: '🖼️ Photo d\'accueil', callback_data: 'admin_photo' }],
-                    [{ text: '📱 Mini Application', callback_data: 'admin_miniapp' }],
-                    [{ text: '🔗 Gérer Réseaux Sociaux', callback_data: 'admin_social' }],
-                    [{ text: '🚚 Gérer Services', callback_data: 'admin_services' }],
-                    [{ text: '📊 Statistiques', callback_data: 'admin_stats' }],
-                    [{ text: '👥 Gérer Admins', callback_data: 'admin_manage' }],
-                    [{ text: '📢 Broadcast', callback_data: 'admin_broadcast' }]
-                ];
-                
-                const text = `🔧 <b>Panel d'Administration</b>\n\n` +
-                             `👥 Utilisateurs: ${stats.totalUsers}\n` +
-                             `📊 Démarrages: ${stats.totalStarts}\n` +
-                             `👨‍💼 Admins: ${stats.totalAdmins}`;
-                
-                await sendOrEditMessage(chatId, text, keyboard, 'HTML', messageId);
+                await showAdminMenu(chatId, userId, messageId);
             }
             break;
             
