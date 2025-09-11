@@ -97,6 +97,16 @@ bot.onText(/\/start/, async (msg) => {
         // Ignorer si impossible
     }
 
+    // Supprimer l'ancien menu s'il existe
+    const state = userStates.get(userId) || {};
+    if (state.messageId) {
+        try {
+            await bot.deleteMessage(chatId, state.messageId);
+        } catch (error) {
+            // Ignorer si le message n'existe plus
+        }
+    }
+
     // Enregistrer/mettre à jour l'utilisateur
     await db.upsertUser(userId, msg.from.username, msg.from.first_name, msg.from.last_name);
     
@@ -139,16 +149,23 @@ bot.onText(/\/start/, async (msg) => {
     // Catalogue supprimé
     
     
-    // Envoyer le message avec ou sans photo
-    const state = userStates.get(userId) || {};
-    
+    // Envoyer le nouveau message (sans éditer l'ancien)
+    let result;
     if (config.welcome_image) {
-        const result = await sendOrEditPhoto(chatId, config.welcome_image, welcomeText, keyboard, state.messageId);
-        userStates.set(userId, { ...state, messageId: result.message_id });
+        result = await bot.sendPhoto(chatId, config.welcome_image, {
+            caption: welcomeText,
+            parse_mode: 'HTML',
+            reply_markup: { inline_keyboard: keyboard }
+        });
     } else {
-        const result = await sendOrEditMessage(chatId, welcomeText, keyboard, 'HTML', state.messageId);
-        userStates.set(userId, { ...state, messageId: result.message_id });
+        result = await bot.sendMessage(chatId, welcomeText, {
+            parse_mode: 'HTML',
+            reply_markup: { inline_keyboard: keyboard }
+        });
     }
+    
+    // Sauvegarder le nouveau messageId
+    userStates.set(userId, { messageId: result.message_id });
 });
 
 // Commande /admin
@@ -161,6 +178,16 @@ bot.onText(/\/admin/, async (msg) => {
         await bot.deleteMessage(chatId, msg.message_id);
     } catch (error) {
         // Ignorer si impossible
+    }
+
+    // Supprimer l'ancien menu s'il existe
+    const state = userStates.get(userId) || {};
+    if (state.messageId) {
+        try {
+            await bot.deleteMessage(chatId, state.messageId);
+        } catch (error) {
+            // Ignorer si le message n'existe plus
+        }
     }
 
     if (!await isAdmin(userId)) {
