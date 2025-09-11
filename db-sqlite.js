@@ -4,13 +4,14 @@ const path = require('path');
 // Classe pour gérer la base de données SQLite
 class SQLiteDatabase {
     constructor() {
-        // Créer ou ouvrir la base de données
-        const dbPath = path.join(__dirname, 'bot.db');
+        // Créer ou ouvrir la base de données avec nom personnalisé
+        const dbName = process.env.DB_NAME || 'bot.db';
+        const dbPath = path.join(__dirname, dbName);
         this.db = new sqlite3.Database(dbPath, (err) => {
             if (err) {
                 console.error('Erreur lors de l\'ouverture de la base de données:', err);
             } else {
-                console.log('✅ Base de données SQLite connectée');
+                console.log(`✅ Base de données SQLite connectée: ${dbName}`);
                 this.initDatabase();
             }
         });
