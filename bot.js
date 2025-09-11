@@ -288,7 +288,24 @@ bot.on('callback_query', async (query) => {
         // Admin
         case 'admin_back':
             if (await isAdmin(userId)) {
-                await showAdminMenu(chatId, userId);
+                const stats = await db.getStats();
+                const keyboard = [
+                    [{ text: '✏️ Message d\'accueil', callback_data: 'admin_welcome' }],
+                    [{ text: '🖼️ Photo d\'accueil', callback_data: 'admin_photo' }],
+                    [{ text: '📱 Mini Application', callback_data: 'admin_miniapp' }],
+                    [{ text: '🔗 Gérer Réseaux Sociaux', callback_data: 'admin_social' }],
+                    [{ text: '🚚 Gérer Services', callback_data: 'admin_services' }],
+                    [{ text: '📊 Statistiques', callback_data: 'admin_stats' }],
+                    [{ text: '👥 Gérer Admins', callback_data: 'admin_manage' }],
+                    [{ text: '📢 Broadcast', callback_data: 'admin_broadcast' }]
+                ];
+                
+                const text = `🔧 <b>Panel d'Administration</b>\n\n` +
+                             `👥 Utilisateurs: ${stats.totalUsers}\n` +
+                             `📊 Démarrages: ${stats.totalStarts}\n` +
+                             `👨‍💼 Admins: ${stats.totalAdmins}`;
+                
+                await sendOrEditMessage(chatId, text, keyboard, 'HTML', messageId);
             }
             break;
             
