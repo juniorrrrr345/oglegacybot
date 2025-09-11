@@ -90,12 +90,6 @@ bot.onText(/\/start/, async (msg) => {
     const userId = msg.from.id;
     const firstName = msg.from.first_name || 'utilisateur';
 
-    // Supprimer le message de commande
-    try {
-        await bot.deleteMessage(chatId, msg.message_id);
-    } catch (error) {
-        // Ignorer l'erreur si le message ne peut pas être supprimé
-    }
 
     // Enregistrer/mettre à jour l'utilisateur
     await db.upsertUser(userId, msg.from.username, msg.from.first_name, msg.from.last_name);
@@ -138,8 +132,6 @@ bot.onText(/\/start/, async (msg) => {
     
     // Catalogue supprimé
     
-    // Info
-    keyboard.push([{ text: 'ℹ️ Info', callback_data: 'info' }]);
     
     // Envoyer le message avec ou sans photo
     const state = userStates.get(userId) || {};
@@ -158,12 +150,6 @@ bot.onText(/\/admin/, async (msg) => {
     const chatId = msg.chat.id;
     const userId = msg.from.id;
     
-    // Supprimer le message de commande
-    try {
-        await bot.deleteMessage(chatId, msg.message_id);
-    } catch (error) {
-        // Ignorer l'erreur si le message ne peut pas être supprimé
-    }
     
     if (!await isAdmin(userId)) {
         await bot.sendMessage(chatId, '❌ Accès refusé. Cette commande est réservée aux administrateurs.');
@@ -249,8 +235,6 @@ bot.on('callback_query', async (query) => {
                 }
             }
             
-            // Info
-            keyboard.push([{ text: 'ℹ️ Info', callback_data: 'info' }]);
             
             // Envoyer le message
             if (config.welcome_image) {
@@ -260,16 +244,6 @@ bot.on('callback_query', async (query) => {
             }
             break;
             
-        case 'info':
-            const configInfo = await db.getConfig();
-            await sendOrEditMessage(
-                chatId, 
-                configInfo.info_text || 'ℹ️ Informations sur notre service',
-                [[{ text: '🔙 Retour', callback_data: 'back_to_start' }]],
-                'HTML',
-                messageId
-            );
-            break;
             
         // Services
         case 'service_liv':
@@ -591,7 +565,7 @@ async function handleOtherCallbacks(query) {
     }
     
     // Callbacks pour l'édition des réseaux sociaux
-    else if (data.startsWith('edit_social_')) {
+    else if (data.startsWith('edit_social_') && !data.includes('_name_') && !data.includes('_emoji_') && !data.includes('_url_')) {
         const socialId = data.replace('edit_social_', '');
         await showSocialEditMenu(chatId, userId, socialId, messageId);
     }
@@ -763,13 +737,9 @@ async function handleOtherCallbacks(query) {
     else if (data.startsWith('confirm_remove_admin_')) {
         const adminId = parseInt(data.replace('confirm_remove_admin_', ''));
         await db.setAdmin(adminId, false);
-        await sendOrEditMessage(
-            chatId,
-            '✅ Administrateur retiré !',
-            [[{ text: '🔙 Retour', callback_data: 'admin_manage' }]],
-            'HTML',
-            messageId
-        );
+        
+        // Rafraîchir l'affichage des administrateurs
+        await showAdminManagement(chatId, userId, messageId);
     }
     
     // Modifier nom d'un sous-menu
@@ -1057,18 +1027,20 @@ bot.on('message', async (msg) => {
         } else {
             // C'est un ID
             newAdminId = parseInt(msg.text);
+            
+            // Vérifier si l'utilisateur existe
+            const user = await db.getUser(newAdminId);
+            if (!user) {
+                // Créer l'utilisateur s'il n'existe pas
+                await db.upsertUser(newAdminId, null, 'Nouvel Admin', null);
+            }
         }
         
         await db.setAdmin(newAdminId, true);
         delete state.state;
         
-        await sendOrEditMessage(
-            chatId,
-            '✅ Nouvel administrateur ajouté !',
-            [[{ text: '🔙 Retour', callback_data: 'admin_manage' }]],
-            'HTML',
-            state.messageId
-        );
+        // Rafraîchir l'affichage des administrateurs
+        await showAdminManagement(chatId, userId, state.messageId);
     }
     
     // Gestion de la modification des sous-menus
