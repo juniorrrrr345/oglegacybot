@@ -90,6 +90,12 @@ bot.onText(/\/start/, async (msg) => {
     const userId = msg.from.id;
     const firstName = msg.from.first_name || 'utilisateur';
 
+    // Supprimer le message de commande
+    try {
+        await bot.deleteMessage(chatId, msg.message_id);
+    } catch (error) {
+        // Ignorer si impossible
+    }
 
     // Enregistrer/mettre à jour l'utilisateur
     await db.upsertUser(userId, msg.from.username, msg.from.first_name, msg.from.last_name);
@@ -150,7 +156,13 @@ bot.onText(/\/admin/, async (msg) => {
     const chatId = msg.chat.id;
     const userId = msg.from.id;
     
-    
+    // Supprimer le message de commande
+    try {
+        await bot.deleteMessage(chatId, msg.message_id);
+    } catch (error) {
+        // Ignorer si impossible
+    }
+
     if (!await isAdmin(userId)) {
         await bot.sendMessage(chatId, '❌ Accès refusé. Cette commande est réservée aux administrateurs.');
         return;
