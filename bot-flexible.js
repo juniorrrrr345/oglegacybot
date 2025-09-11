@@ -7,6 +7,20 @@ let db;
 if (DB_TYPE === 'sqlite') {
     const { SQLiteDatabase } = require('./db-sqlite');
     db = new SQLiteDatabase();
+} else if (DB_TYPE === 'd1') {
+    const { CloudflareD1Database } = require('./db-cloudflare-d1');
+    const { D1_CONFIG } = require('./config');
+    
+    if (!D1_CONFIG.account_id || !D1_CONFIG.database_id || !D1_CONFIG.api_token) {
+        console.error('❌ Configuration Cloudflare D1 manquante dans .env');
+        process.exit(1);
+    }
+    
+    db = new CloudflareD1Database(
+        D1_CONFIG.account_id,
+        D1_CONFIG.database_id,
+        D1_CONFIG.api_token
+    );
 } else {
     // Par défaut, utiliser la base en mémoire
     const { D1Database } = require('./db');

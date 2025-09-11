@@ -9,9 +9,9 @@ const DB_TYPE = process.env.DB_TYPE || 'memory';
 
 // Configuration Cloudflare D1 (si utilisé)
 const D1_CONFIG = {
-    database_id: process.env.D1_DATABASE_ID,
-    account_id: process.env.D1_ACCOUNT_ID,
-    api_token: process.env.D1_API_TOKEN
+    database_id: process.env.CLOUDFLARE_DATABASE_ID,
+    account_id: process.env.CLOUDFLARE_ACCOUNT_ID,
+    api_token: process.env.CLOUDFLARE_API_TOKEN
 };
 
 module.exports = {
