@@ -23,6 +23,9 @@
     "dotenv": "^16.3.1",
     "node-telegram-bot-api": "^0.64.0"
   },
+  "optionalDependencies": {
+    "sqlite3": "^5.1.6"
+  },
   "devDependencies": {
     "nodemon": "^3.0.2",
     "wrangler": "^3.22.4"
