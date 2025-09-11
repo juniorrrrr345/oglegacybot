@@ -90,12 +90,6 @@ bot.onText(/\/start/, async (msg) => {
     const userId = msg.from.id;
     const firstName = msg.from.first_name || 'utilisateur';
 
-    // Supprimer le message de commande
-    try {
-        await bot.deleteMessage(chatId, msg.message_id);
-    } catch (error) {
-        // Ignorer si impossible
-    }
 
     // Supprimer l'ancien menu s'il existe
     const state = userStates.get(userId) || {};
@@ -173,12 +167,6 @@ bot.onText(/\/admin/, async (msg) => {
     const chatId = msg.chat.id;
     const userId = msg.from.id;
     
-    // Supprimer le message de commande
-    try {
-        await bot.deleteMessage(chatId, msg.message_id);
-    } catch (error) {
-        // Ignorer si impossible
-    }
 
     // Supprimer l'ancien menu s'il existe
     const state = userStates.get(userId) || {};
