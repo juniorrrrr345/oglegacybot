@@ -120,7 +120,7 @@ async function sendOrEditPhoto(chatId, photo, caption, keyboard = null, messageI
     try {
         if (messageId) {
             // Essayer d'éditer avec une nouvelle photo
-            await bot.editMessageMedia({
+            const result = await bot.editMessageMedia({
                 type: 'photo',
                 media: photo,
                 caption: caption,
@@ -130,7 +130,7 @@ async function sendOrEditPhoto(chatId, photo, caption, keyboard = null, messageI
                 message_id: messageId,
                 reply_markup: keyboard ? { inline_keyboard: keyboard } : undefined
             });
-            return { message_id: messageId };
+            return result || { message_id: messageId };
         }
     } catch (error) {
         console.log('Édition de photo échouée, envoi d\'une nouvelle photo');
@@ -145,16 +145,8 @@ bot.onText(/\/start/, async (msg) => {
     const userId = msg.from.id;
     const firstName = msg.from.first_name || 'utilisateur';
 
-
-    // Supprimer l'ancien menu s'il existe
+    // Récupérer l'état actuel
     const state = userStates.get(userId) || {};
-    if (state.messageId) {
-        try {
-            await bot.deleteMessage(chatId, state.messageId);
-        } catch (error) {
-            // Ignorer si le message n'existe plus
-        }
-    }
 
     // Enregistrer/mettre à jour l'utilisateur
     await db.upsertUser(userId, msg.from.username, msg.from.first_name, msg.from.last_name);
@@ -195,26 +187,49 @@ bot.onText(/\/start/, async (msg) => {
         }
     }
     
-    // Catalogue supprimé
-    
-    
-    // Envoyer le nouveau message (sans éditer l'ancien)
     let result;
-    if (config.welcome_image) {
-        result = await bot.sendPhoto(chatId, config.welcome_image, {
-            caption: welcomeText,
-            parse_mode: 'HTML',
-            reply_markup: { inline_keyboard: keyboard }
-        });
+    
+    // Si on a déjà un messageId, essayer d'éditer
+    if (state.messageId) {
+        try {
+            if (config.welcome_image) {
+                result = await sendOrEditPhoto(chatId, config.welcome_image, welcomeText, keyboard, state.messageId);
+            } else {
+                result = await sendOrEditMessage(chatId, welcomeText, keyboard, 'HTML', state.messageId);
+            }
+        } catch (error) {
+            // Si l'édition échoue, envoyer un nouveau message
+            if (config.welcome_image) {
+                result = await bot.sendPhoto(chatId, config.welcome_image, {
+                    caption: welcomeText,
+                    parse_mode: 'HTML',
+                    reply_markup: { inline_keyboard: keyboard }
+                });
+            } else {
+                result = await bot.sendMessage(chatId, welcomeText, {
+                    parse_mode: 'HTML',
+                    reply_markup: { inline_keyboard: keyboard }
+                });
+            }
+        }
     } else {
-        result = await bot.sendMessage(chatId, welcomeText, {
-            parse_mode: 'HTML',
-            reply_markup: { inline_keyboard: keyboard }
-        });
+        // Sinon envoyer un nouveau message
+        if (config.welcome_image) {
+            result = await bot.sendPhoto(chatId, config.welcome_image, {
+                caption: welcomeText,
+                parse_mode: 'HTML',
+                reply_markup: { inline_keyboard: keyboard }
+            });
+        } else {
+            result = await bot.sendMessage(chatId, welcomeText, {
+                parse_mode: 'HTML',
+                reply_markup: { inline_keyboard: keyboard }
+            });
+        }
     }
     
-    // Sauvegarder le nouveau messageId
-    userStates.set(userId, { messageId: result.message_id });
+    // Sauvegarder le messageId
+    userStates.set(userId, { ...state, messageId: result.message_id });
 });
 
 // Commande /admin
@@ -222,16 +237,8 @@ bot.onText(/\/admin/, async (msg) => {
     const chatId = msg.chat.id;
     const userId = msg.from.id;
     
-
-    // Supprimer l'ancien menu s'il existe
+    // Récupérer l'état actuel
     const state = userStates.get(userId) || {};
-    if (state.messageId) {
-        try {
-            await bot.deleteMessage(chatId, state.messageId);
-        } catch (error) {
-            // Ignorer si le message n'existe plus
-        }
-    }
 
     if (!await isAdmin(userId)) {
         await bot.sendMessage(chatId, '❌ Accès refusé. Cette commande est réservée aux administrateurs.');
@@ -239,7 +246,7 @@ bot.onText(/\/admin/, async (msg) => {
     }
     
     await db.logEvent('admin', userId);
-    await showAdminMenu(chatId, userId);
+    await showAdminMenu(chatId, userId, state.messageId);
 });
 
 // Afficher le menu admin
@@ -510,11 +517,15 @@ async function showService(chatId, userId, serviceType, messageId) {
     
     const state = userStates.get(userId) || {};
     
+    let result;
     if (image) {
-        await sendOrEditPhoto(chatId, image, text, keyboard, messageId);
+        result = await sendOrEditPhoto(chatId, image, text, keyboard, messageId);
     } else {
-        await sendOrEditMessage(chatId, text, keyboard, 'HTML', messageId);
+        result = await sendOrEditMessage(chatId, text, keyboard, 'HTML', messageId);
     }
+    
+    // Sauvegarder le messageId pour les futures éditions
+    userStates.set(userId, { ...state, messageId: result.message_id || messageId });
 }
 
 // Afficher le menu d'édition d'un service
@@ -1298,11 +1309,15 @@ async function showSubmenuContent(chatId, userId, submenuId, messageId) {
     const keyboard = [[{ text: '🔙 Retour', callback_data: serviceCallback }]];
     const state = userStates.get(userId) || {};
     
+    let result;
     if (submenu.image) {
-        await sendOrEditPhoto(chatId, submenu.image, submenu.text || submenu.name, keyboard, messageId);
+        result = await sendOrEditPhoto(chatId, submenu.image, submenu.text || submenu.name, keyboard, messageId);
     } else {
-        await sendOrEditMessage(chatId, submenu.text || submenu.name, keyboard, 'HTML', messageId);
+        result = await sendOrEditMessage(chatId, submenu.text || submenu.name, keyboard, 'HTML', messageId);
     }
+    
+    // Sauvegarder le messageId pour les futures éditions
+    userStates.set(userId, { ...state, messageId: result.message_id || messageId });
 }
 
 // Menu d'édition d'un réseau social
