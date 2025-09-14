@@ -833,11 +833,14 @@ async function handleOtherCallbacks(query) {
         
         await sendOrEditMessage(
             chatId,
-            '✅ Sous-menu ajouté !',
+            '✅ Sous-menu ajouté sans photo !',
             [[{ text: '🔙 Retour', callback_data: 'admin_services' }]],
             'HTML',
             messageId
         );
+        
+        // Nettoyer l'état
+        userStates.set(userId, { messageId: messageId });
     }
     
     // Ajouter un admin
@@ -1314,6 +1317,9 @@ bot.on('photo', async (msg) => {
             'HTML',
             state.messageId
         );
+        
+        // Nettoyer l'état
+        userStates.set(userId, { messageId: state.messageId });
     }
 });
 
