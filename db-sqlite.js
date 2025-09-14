@@ -114,6 +114,26 @@ class SQLiteDatabase {
                 );
             }
         }
+
+        // Ajouter des sous-menus par défaut s'ils n'existent pas
+        const submenuCount = await this.get("SELECT COUNT(*) as count FROM service_submenus");
+        if (submenuCount.count === 0) {
+            const defaultSubmenus = [
+                { service_type: 'livraison', name: 'Livraison Express', text: '🚚 Livraison en 24h', position: 1 },
+                { service_type: 'livraison', name: 'Livraison Standard', text: '📦 Livraison en 3-5 jours', position: 2 },
+                { service_type: 'postal', name: 'Envoi National', text: '📮 Envoi dans tout le pays', position: 1 },
+                { service_type: 'postal', name: 'Envoi International', text: '🌍 Envoi à l\'étranger', position: 2 },
+                { service_type: 'meetup', name: 'Rencontre Café', text: '☕ Rencontre dans un café', position: 1 },
+                { service_type: 'meetup', name: 'Rencontre Bureau', text: '🏢 Rencontre au bureau', position: 2 }
+            ];
+
+            for (const submenu of defaultSubmenus) {
+                await this.run(
+                    "INSERT INTO service_submenus (service_type, name, text, position, is_active) VALUES (?, ?, ?, ?, ?)",
+                    [submenu.service_type, submenu.name, submenu.text, submenu.position, 1]
+                );
+            }
+        }
     }
 
     // Méthode utilitaire pour exécuter une requête
