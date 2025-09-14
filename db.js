@@ -139,7 +139,8 @@ class D1Database {
 
     async getSubmenu(id) {
         // En production: const result = await DB.prepare("SELECT * FROM service_submenus WHERE id = ?").bind(id).first();
-        return this.mockData.serviceSubmenus.get(parseInt(id));
+        const submenuId = parseInt(id);
+        return this.mockData.serviceSubmenus.get(submenuId);
     }
 
     async addSubmenu(serviceType, name, text, image) {
@@ -154,7 +155,8 @@ class D1Database {
 
     async updateSubmenu(id, updates) {
         // En production: await DB.prepare("UPDATE service_submenus SET ... WHERE id = ?").bind(...).run();
-        const submenu = this.mockData.serviceSubmenus.get(parseInt(id));
+        const submenuId = parseInt(id);
+        const submenu = this.mockData.serviceSubmenus.get(submenuId);
         if (submenu) {
             Object.assign(submenu, updates);
             return true;
@@ -164,7 +166,8 @@ class D1Database {
 
     async deleteSubmenu(id) {
         // En production: await DB.prepare("DELETE FROM service_submenus WHERE id = ?").bind(id).run();
-        return this.mockData.serviceSubmenus.delete(parseInt(id));
+        const submenuId = parseInt(id);
+        return this.mockData.serviceSubmenus.delete(submenuId);
     }
 
     // Statistiques

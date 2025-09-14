@@ -1,6 +1,6 @@
 require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
-const { D1Database } = require('./db');
+const { SQLiteDatabase } = require('./db-sqlite');
 
 // Vérifier les variables d'environnement
 if (!process.env.BOT_TOKEN) {
@@ -15,7 +15,7 @@ if (!process.env.ADMIN_ID) {
 
 // Initialiser le bot
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
-const db = new D1Database();
+const db = new SQLiteDatabase();
 
 // États des utilisateurs pour gérer les conversations
 const userStates = new Map();
