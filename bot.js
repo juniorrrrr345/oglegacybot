@@ -17,6 +17,11 @@ if (!process.env.ADMIN_ID) {
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 const db = new SQLiteDatabase();
 
+// Attendre que la base de données soit prête
+db.db.on('open', () => {
+    console.log('✅ Base de données SQLite prête');
+});
+
 // États des utilisateurs pour gérer les conversations
 const userStates = new Map();
 

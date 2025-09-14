@@ -246,7 +246,7 @@ class SQLiteDatabase {
     }
 
     async getSubmenu(id) {
-        return await this.get("SELECT * FROM service_submenus WHERE id = ?", [id]);
+        return await this.get("SELECT * FROM service_submenus WHERE id = ?", [parseInt(id)]);
     }
 
     async addSubmenu(serviceType, name, text, image) {
@@ -266,7 +266,7 @@ class SQLiteDatabase {
 
     async updateSubmenu(id, updates) {
         const fields = Object.keys(updates).map(key => `${key} = ?`).join(', ');
-        const values = [...Object.values(updates), id];
+        const values = [...Object.values(updates), parseInt(id)];
         const result = await this.run(
             `UPDATE service_submenus SET ${fields} WHERE id = ?`,
             values
@@ -277,7 +277,7 @@ class SQLiteDatabase {
     async deleteSubmenu(id) {
         const result = await this.run(
             "DELETE FROM service_submenus WHERE id = ?",
-            [id]
+            [parseInt(id)]
         );
         return result.changes > 0;
     }
