@@ -807,6 +807,39 @@ async function handleOtherCallbacks(query) {
         );
     }
     
+    // Callbacks pour l'ajout de photo au sous-menu
+    else if (data === 'add_submenu_photo_yes') {
+        userStates.set(userId, { ...state, state: 'adding_submenu_photo' });
+        await sendOrEditMessage(
+            chatId,
+            '📷 <b>Envoyez la photo pour ce sous-menu</b>\n\n' +
+            '<i>Cette photo s\'affichera quand l\'utilisateur cliquera sur le sous-menu</i>',
+            [[{ text: '❌ Annuler', callback_data: `manage_submenus_${state.serviceType}` }]],
+            'HTML',
+            messageId
+        );
+    }
+    
+    else if (data === 'add_submenu_photo_no') {
+        // Créer le sous-menu sans photo
+        const fullServiceType = state.serviceType === 'liv' ? 'livraison' : 
+                               state.serviceType === 'pos' ? 'postal' : 'meetup';
+        
+        await db.addSubmenu(fullServiceType, state.submenuName, state.submenuText, null);
+        delete state.state;
+        delete state.submenuName;
+        delete state.submenuText;
+        delete state.serviceType;
+        
+        await sendOrEditMessage(
+            chatId,
+            '✅ Sous-menu ajouté !',
+            [[{ text: '🔙 Retour', callback_data: 'admin_services' }]],
+            'HTML',
+            messageId
+        );
+    }
+    
     // Ajouter un admin
     else if (data === 'add_admin') {
         userStates.set(userId, { ...state, state: 'adding_admin' });
@@ -1073,23 +1106,26 @@ bot.on('message', async (msg) => {
     }
     
     else if (state.state === 'adding_submenu_text') {
-        const fullServiceType = state.serviceType === 'liv' ? 'livraison' : 
-                               state.serviceType === 'pos' ? 'postal' : 'meetup';
-        // Convertir les entités Telegram en HTML
+        // Sauvegarder le texte formaté
         const formattedText = parseMessageEntities(msg.text, msg.entities);
-        await db.addSubmenu(fullServiceType, state.submenuName, formattedText, null);
-        delete state.state;
-        delete state.submenuName;
-        delete state.serviceType;
+        state.submenuText = formattedText;
+        state.state = 'adding_submenu_photo_choice';
+        userStates.set(userId, state);
         
+        // Demander si l'utilisateur veut ajouter une photo
         await sendOrEditMessage(
             chatId,
-            '✅ Sous-menu ajouté !',
-            [[{ text: '🔙 Retour', callback_data: 'admin_services' }]],
+            '🖼️ <b>Voulez-vous ajouter une photo à ce sous-menu ?</b>\n\n' +
+            '<i>La photo s\'affichera avec le texte du sous-menu</i>',
+            [
+                [{ text: '📷 Oui, ajouter une photo', callback_data: 'add_submenu_photo_yes' }],
+                [{ text: '❌ Non, pas de photo', callback_data: 'add_submenu_photo_no' }]
+            ],
             'HTML',
             state.messageId
         );
     }
+    
     
     // Gestion de la modification des réseaux sociaux
     else if (state.state === 'editing_social_name') {
@@ -1244,7 +1280,7 @@ bot.on('photo', async (msg) => {
         );
     }
     
-    // Photo d'un sous-menu
+    // Photo d'un sous-menu (modification)
     else if (state.state === 'editing_submenu_photo') {
         await db.updateSubmenu(state.submenuId, { image: photo });
         delete state.state;
@@ -1254,6 +1290,26 @@ bot.on('photo', async (msg) => {
         await sendOrEditMessage(
             chatId,
             '✅ Photo du sous-menu mise à jour !',
+            [[{ text: '🔙 Retour', callback_data: 'admin_services' }]],
+            'HTML',
+            state.messageId
+        );
+    }
+    
+    // Photo d'un sous-menu (création)
+    else if (state.state === 'adding_submenu_photo') {
+        const fullServiceType = state.serviceType === 'liv' ? 'livraison' : 
+                               state.serviceType === 'pos' ? 'postal' : 'meetup';
+        
+        await db.addSubmenu(fullServiceType, state.submenuName, state.submenuText, photo);
+        delete state.state;
+        delete state.submenuName;
+        delete state.submenuText;
+        delete state.serviceType;
+        
+        await sendOrEditMessage(
+            chatId,
+            '✅ Sous-menu ajouté avec photo !',
             [[{ text: '🔙 Retour', callback_data: 'admin_services' }]],
             'HTML',
             state.messageId
