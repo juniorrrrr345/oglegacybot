@@ -304,7 +304,13 @@ bot.on('callback_query', async (query) => {
                     chatId,
                     '✏️ <b>Modifier le message d\'accueil</b>\n\n' +
                     'Envoyez le nouveau message.\n' +
-                    'Utilisez {firstname} pour inclure le prénom.',
+                    'Utilisez {firstname} pour inclure le prénom.\n\n' +
+                    '💡 <b>Formatage disponible:</b>\n' +
+                    '• <code>&lt;b&gt;texte&lt;/b&gt;</code> → <b>Gras</b>\n' +
+                    '• <code>&lt;i&gt;texte&lt;/i&gt;</code> → <i>Italique</i>\n' +
+                    '• <code>&lt;u&gt;texte&lt;/u&gt;</code> → <u>Souligné</u>\n' +
+                    '• <code>&lt;s&gt;texte&lt;/s&gt;</code> → <s>Barré</s>\n' +
+                    '• <code>&lt;code&gt;texte&lt;/code&gt;</code> → <code>Code</code>',
                     [[{ text: '❌ Annuler', callback_data: 'admin_back' }]],
                     'HTML',
                     messageId
@@ -562,7 +568,15 @@ async function handleOtherCallbacks(query) {
         userStates.set(userId, { ...state, state: `waiting_service_text_${serviceType}` });
         await sendOrEditMessage(
             chatId,
-            '📝 Envoyez le nouveau texte pour ce service:',
+            '📝 <b>Envoyez le nouveau texte pour ce service:</b>\n\n' +
+            '💡 <b>Formatage disponible:</b>\n' +
+            '• <code>&lt;b&gt;texte&lt;/b&gt;</code> → <b>Gras</b>\n' +
+            '• <code>&lt;i&gt;texte&lt;/i&gt;</code> → <i>Italique</i>\n' +
+            '• <code>&lt;u&gt;texte&lt;/u&gt;</code> → <u>Souligné</u>\n' +
+            '• <code>&lt;s&gt;texte&lt;/s&gt;</code> → <s>Barré</s>\n' +
+            '• <code>&lt;code&gt;texte&lt;/code&gt;</code> → <code>Code</code>\n' +
+            '• <code>&lt;pre&gt;texte&lt;/pre&gt;</code> → Bloc de code\n\n' +
+            '<i>Vous pouvez combiner: <code>&lt;b&gt;&lt;i&gt;texte&lt;/i&gt;&lt;/b&gt;</code></i>',
             [[{ text: '❌ Annuler', callback_data: `edit_service_${serviceType}` }]],
             'HTML',
             messageId
@@ -806,7 +820,15 @@ async function handleOtherCallbacks(query) {
         userStates.set(userId, { ...state, state: 'editing_submenu_text', submenuId, serviceType });
         await sendOrEditMessage(
             chatId,
-            '📝 Envoyez le nouveau texte du sous-menu:',
+            '📝 <b>Envoyez le nouveau texte du sous-menu:</b>\n\n' +
+            '💡 <b>Formatage disponible:</b>\n' +
+            '• <code>&lt;b&gt;texte&lt;/b&gt;</code> → <b>Gras</b>\n' +
+            '• <code>&lt;i&gt;texte&lt;/i&gt;</code> → <i>Italique</i>\n' +
+            '• <code>&lt;u&gt;texte&lt;/u&gt;</code> → <u>Souligné</u>\n' +
+            '• <code>&lt;s&gt;texte&lt;/s&gt;</code> → <s>Barré</s>\n' +
+            '• <code>&lt;code&gt;texte&lt;/code&gt;</code> → <code>Code</code>\n' +
+            '• <code>&lt;pre&gt;texte&lt;/pre&gt;</code> → Bloc de code\n\n' +
+            '<i>Vous pouvez combiner: <code>&lt;b&gt;&lt;i&gt;texte&lt;/i&gt;&lt;/b&gt;</code></i>',
             [[{ text: '❌ Annuler', callback_data: `edit_submenu_${serviceType}_${submenuId}` }]],
             'HTML',
             messageId
@@ -978,7 +1000,13 @@ bot.on('message', async (msg) => {
         await sendOrEditMessage(
             chatId,
             `📋 <b>${msg.text}</b>\n\n` +
-            'Envoyez le texte/description du sous-menu:',
+            'Envoyez le texte/description du sous-menu:\n\n' +
+            '💡 <b>Formatage disponible:</b>\n' +
+            '• <code>&lt;b&gt;texte&lt;/b&gt;</code> → <b>Gras</b>\n' +
+            '• <code>&lt;i&gt;texte&lt;/i&gt;</code> → <i>Italique</i>\n' +
+            '• <code>&lt;u&gt;texte&lt;/u&gt;</code> → <u>Souligné</u>\n' +
+            '• <code>&lt;s&gt;texte&lt;/s&gt;</code> → <s>Barré</s>\n' +
+            '• <code>&lt;code&gt;texte&lt;/code&gt;</code> → <code>Code</code>',
             [[{ text: '❌ Annuler', callback_data: `manage_submenus_${state.serviceType}` }]],
             'HTML',
             state.messageId
