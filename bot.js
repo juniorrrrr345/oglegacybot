@@ -654,10 +654,13 @@ async function handleOtherCallbacks(query) {
     }
     
     // Éditer un sous-menu
-    else if (data.startsWith('edit_submenu_')) {
-        const parts = data.split('_');
-        const serviceType = parts[2];
-        const submenuId = parts[3];
+    else if (data.startsWith('edit_submenu_') && !data.includes('_name_') && !data.includes('_text_') && !data.includes('_photo_')) {
+        // Extraire submenuId en prenant la dernière partie après le dernier underscore
+        const lastUnderscoreIndex = data.lastIndexOf('_');
+        const submenuId = data.substring(lastUnderscoreIndex + 1);
+        // Extraire serviceType en enlevant le préfixe et le suffixe
+        const prefix = 'edit_submenu_';
+        const serviceType = data.substring(prefix.length, lastUnderscoreIndex);
         await showSubmenuEditMenu(chatId, userId, serviceType, submenuId, messageId);
     }
     
@@ -776,9 +779,12 @@ async function handleOtherCallbacks(query) {
     
     // Modifier nom d'un sous-menu
     else if (data.startsWith('edit_submenu_name_')) {
-        const parts = data.split('_');
-        const serviceType = parts[3];
-        const submenuId = parts[4];
+        // Extraire submenuId en prenant la dernière partie après le dernier underscore
+        const lastUnderscoreIndex = data.lastIndexOf('_');
+        const submenuId = data.substring(lastUnderscoreIndex + 1);
+        // Extraire serviceType en enlevant le préfixe et le suffixe
+        const prefix = 'edit_submenu_name_';
+        const serviceType = data.substring(prefix.length, lastUnderscoreIndex);
         userStates.set(userId, { ...state, state: 'editing_submenu_name', submenuId, serviceType });
         await sendOrEditMessage(
             chatId,
@@ -791,9 +797,12 @@ async function handleOtherCallbacks(query) {
     
     // Modifier texte d'un sous-menu
     else if (data.startsWith('edit_submenu_text_')) {
-        const parts = data.split('_');
-        const serviceType = parts[3];
-        const submenuId = parts[4];
+        // Extraire submenuId en prenant la dernière partie après le dernier underscore
+        const lastUnderscoreIndex = data.lastIndexOf('_');
+        const submenuId = data.substring(lastUnderscoreIndex + 1);
+        // Extraire serviceType en enlevant le préfixe et le suffixe
+        const prefix = 'edit_submenu_text_';
+        const serviceType = data.substring(prefix.length, lastUnderscoreIndex);
         userStates.set(userId, { ...state, state: 'editing_submenu_text', submenuId, serviceType });
         await sendOrEditMessage(
             chatId,
@@ -806,9 +815,12 @@ async function handleOtherCallbacks(query) {
     
     // Modifier photo d'un sous-menu
     else if (data.startsWith('edit_submenu_photo_')) {
-        const parts = data.split('_');
-        const serviceType = parts[3];
-        const submenuId = parts[4];
+        // Extraire submenuId en prenant la dernière partie après le dernier underscore
+        const lastUnderscoreIndex = data.lastIndexOf('_');
+        const submenuId = data.substring(lastUnderscoreIndex + 1);
+        // Extraire serviceType en enlevant le préfixe et le suffixe
+        const prefix = 'edit_submenu_photo_';
+        const serviceType = data.substring(prefix.length, lastUnderscoreIndex);
         userStates.set(userId, { ...state, state: 'editing_submenu_photo', submenuId, serviceType });
         await sendOrEditMessage(
             chatId,
