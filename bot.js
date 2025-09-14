@@ -1,6 +1,6 @@
 require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
-const { getDatabase } = require('./database');
+const { SQLiteDatabase } = require('./db-sqlite');
 
 // Vérifier les variables d'environnement
 if (!process.env.BOT_TOKEN) {
@@ -15,16 +15,12 @@ if (!process.env.ADMIN_ID) {
 
 // Initialiser le bot
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
-const db = getDatabase();
+const db = new SQLiteDatabase();
 
-// Attendre que la base de données soit prête (pour SQLite)
-if (db.db && db.db.on) {
-    db.db.on('open', () => {
-        console.log('✅ Base de données SQLite prête');
-    });
-} else {
-    console.log('✅ Base de données Cloudflare D1 prête');
-}
+// Attendre que la base de données soit prête
+db.db.on('open', () => {
+    console.log('✅ Base de données SQLite prête');
+});
 
 // États des utilisateurs pour gérer les conversations
 const userStates = new Map();
