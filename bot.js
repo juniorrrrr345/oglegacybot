@@ -25,6 +25,56 @@ db.db.on('open', () => {
 // États des utilisateurs pour gérer les conversations
 const userStates = new Map();
 
+// Fonction pour convertir les entités Telegram en HTML
+function parseMessageEntities(text, entities) {
+    if (!entities || entities.length === 0) return text;
+    
+    // Trier les entités par offset décroissant pour traiter de la fin vers le début
+    const sortedEntities = [...entities].sort((a, b) => b.offset - a.offset);
+    
+    let result = text;
+    
+    for (const entity of sortedEntities) {
+        const start = entity.offset;
+        const end = entity.offset + entity.length;
+        const entityText = text.substring(start, end);
+        
+        let replacement = entityText;
+        
+        switch (entity.type) {
+            case 'bold':
+                replacement = `<b>${entityText}</b>`;
+                break;
+            case 'italic':
+                replacement = `<i>${entityText}</i>`;
+                break;
+            case 'underline':
+                replacement = `<u>${entityText}</u>`;
+                break;
+            case 'strikethrough':
+                replacement = `<s>${entityText}</s>`;
+                break;
+            case 'code':
+                replacement = `<code>${entityText}</code>`;
+                break;
+            case 'pre':
+                replacement = `<pre>${entityText}</pre>`;
+                break;
+            case 'text_link':
+                replacement = `<a href="${entity.url}">${entityText}</a>`;
+                break;
+            case 'spoiler':
+                replacement = `<span class="tg-spoiler">${entityText}</span>`;
+                break;
+        }
+        
+        // Remplacer dans le texte
+        result = result.substring(0, start) + replacement + result.substring(end);
+    }
+    
+    return result;
+}
+
 // Vérifier si l'utilisateur est admin
 async function isAdmin(userId) {
     if (userId.toString() === process.env.ADMIN_ID) return true;
@@ -305,12 +355,7 @@ bot.on('callback_query', async (query) => {
                     '✏️ <b>Modifier le message d\'accueil</b>\n\n' +
                     'Envoyez le nouveau message.\n' +
                     'Utilisez {firstname} pour inclure le prénom.\n\n' +
-                    '💡 <b>Formatage disponible:</b>\n' +
-                    '• <code>&lt;b&gt;texte&lt;/b&gt;</code> → <b>Gras</b>\n' +
-                    '• <code>&lt;i&gt;texte&lt;/i&gt;</code> → <i>Italique</i>\n' +
-                    '• <code>&lt;u&gt;texte&lt;/u&gt;</code> → <u>Souligné</u>\n' +
-                    '• <code>&lt;s&gt;texte&lt;/s&gt;</code> → <s>Barré</s>\n' +
-                    '• <code>&lt;code&gt;texte&lt;/code&gt;</code> → <code>Code</code>',
+                    '💡 <i>Astuce: Sélectionnez votre texte et utilisez le menu de formatage Telegram</i>',
                     [[{ text: '❌ Annuler', callback_data: 'admin_back' }]],
                     'HTML',
                     messageId
@@ -569,14 +614,7 @@ async function handleOtherCallbacks(query) {
         await sendOrEditMessage(
             chatId,
             '📝 <b>Envoyez le nouveau texte pour ce service:</b>\n\n' +
-            '💡 <b>Formatage disponible:</b>\n' +
-            '• <code>&lt;b&gt;texte&lt;/b&gt;</code> → <b>Gras</b>\n' +
-            '• <code>&lt;i&gt;texte&lt;/i&gt;</code> → <i>Italique</i>\n' +
-            '• <code>&lt;u&gt;texte&lt;/u&gt;</code> → <u>Souligné</u>\n' +
-            '• <code>&lt;s&gt;texte&lt;/s&gt;</code> → <s>Barré</s>\n' +
-            '• <code>&lt;code&gt;texte&lt;/code&gt;</code> → <code>Code</code>\n' +
-            '• <code>&lt;pre&gt;texte&lt;/pre&gt;</code> → Bloc de code\n\n' +
-            '<i>Vous pouvez combiner: <code>&lt;b&gt;&lt;i&gt;texte&lt;/i&gt;&lt;/b&gt;</code></i>',
+            '💡 <i>Astuce: Sélectionnez votre texte et utilisez le menu de formatage Telegram (gras, italique, souligné, etc.)</i>',
             [[{ text: '❌ Annuler', callback_data: `edit_service_${serviceType}` }]],
             'HTML',
             messageId
@@ -821,14 +859,7 @@ async function handleOtherCallbacks(query) {
         await sendOrEditMessage(
             chatId,
             '📝 <b>Envoyez le nouveau texte du sous-menu:</b>\n\n' +
-            '💡 <b>Formatage disponible:</b>\n' +
-            '• <code>&lt;b&gt;texte&lt;/b&gt;</code> → <b>Gras</b>\n' +
-            '• <code>&lt;i&gt;texte&lt;/i&gt;</code> → <i>Italique</i>\n' +
-            '• <code>&lt;u&gt;texte&lt;/u&gt;</code> → <u>Souligné</u>\n' +
-            '• <code>&lt;s&gt;texte&lt;/s&gt;</code> → <s>Barré</s>\n' +
-            '• <code>&lt;code&gt;texte&lt;/code&gt;</code> → <code>Code</code>\n' +
-            '• <code>&lt;pre&gt;texte&lt;/pre&gt;</code> → Bloc de code\n\n' +
-            '<i>Vous pouvez combiner: <code>&lt;b&gt;&lt;i&gt;texte&lt;/i&gt;&lt;/b&gt;</code></i>',
+            '💡 <i>Astuce: Sélectionnez votre texte et utilisez le menu de formatage Telegram</i>',
             [[{ text: '❌ Annuler', callback_data: `edit_submenu_${serviceType}_${submenuId}` }]],
             'HTML',
             messageId
@@ -868,7 +899,9 @@ bot.on('message', async (msg) => {
     
     // Gestion du message d'accueil
     if (state.state === 'waiting_welcome') {
-        await db.updateConfig({ welcome_message: msg.text });
+        // Convertir les entités Telegram en HTML
+        const formattedText = parseMessageEntities(msg.text, msg.entities);
+        await db.updateConfig({ welcome_message: formattedText });
         delete state.state;
         await sendOrEditMessage(
             chatId,
@@ -884,9 +917,12 @@ bot.on('message', async (msg) => {
         const users = await db.getAllUsers();
         let sent = 0;
         
+        // Convertir les entités Telegram en HTML
+        const formattedText = parseMessageEntities(msg.text, msg.entities);
+        
         for (const user of users) {
             try {
-                await bot.sendMessage(user.user_id, msg.text, { parse_mode: 'HTML' });
+                await bot.sendMessage(user.user_id, formattedText, { parse_mode: 'HTML' });
                 sent++;
             } catch (error) {
                 console.log(`Erreur envoi à ${user.user_id}:`, error.message);
@@ -909,7 +945,9 @@ bot.on('message', async (msg) => {
         const field = serviceType === 'liv' ? 'livraison_text' :
                      serviceType === 'pos' ? 'postal_text' : 'meetup_text';
         
-        await db.updateConfig({ [field]: msg.text });
+        // Convertir les entités Telegram en HTML
+        const formattedText = parseMessageEntities(msg.text, msg.entities);
+        await db.updateConfig({ [field]: formattedText });
         delete state.state;
         await sendOrEditMessage(
             chatId,
@@ -1001,12 +1039,7 @@ bot.on('message', async (msg) => {
             chatId,
             `📋 <b>${msg.text}</b>\n\n` +
             'Envoyez le texte/description du sous-menu:\n\n' +
-            '💡 <b>Formatage disponible:</b>\n' +
-            '• <code>&lt;b&gt;texte&lt;/b&gt;</code> → <b>Gras</b>\n' +
-            '• <code>&lt;i&gt;texte&lt;/i&gt;</code> → <i>Italique</i>\n' +
-            '• <code>&lt;u&gt;texte&lt;/u&gt;</code> → <u>Souligné</u>\n' +
-            '• <code>&lt;s&gt;texte&lt;/s&gt;</code> → <s>Barré</s>\n' +
-            '• <code>&lt;code&gt;texte&lt;/code&gt;</code> → <code>Code</code>',
+            '💡 <i>Astuce: Sélectionnez votre texte et utilisez le menu de formatage Telegram</i>',
             [[{ text: '❌ Annuler', callback_data: `manage_submenus_${state.serviceType}` }]],
             'HTML',
             state.messageId
@@ -1016,7 +1049,9 @@ bot.on('message', async (msg) => {
     else if (state.state === 'adding_submenu_text') {
         const fullServiceType = state.serviceType === 'liv' ? 'livraison' : 
                                state.serviceType === 'pos' ? 'postal' : 'meetup';
-        await db.addSubmenu(fullServiceType, state.submenuName, msg.text, null);
+        // Convertir les entités Telegram en HTML
+        const formattedText = parseMessageEntities(msg.text, msg.entities);
+        await db.addSubmenu(fullServiceType, state.submenuName, formattedText, null);
         delete state.state;
         delete state.submenuName;
         delete state.serviceType;
@@ -1124,7 +1159,9 @@ bot.on('message', async (msg) => {
         if (field === 'name') {
             await db.updateSubmenu(submenuId, { name: msg.text });
         } else if (field === 'text') {
-            await db.updateSubmenu(submenuId, { text: msg.text });
+            // Convertir les entités Telegram en HTML
+            const formattedText = parseMessageEntities(msg.text, msg.entities);
+            await db.updateSubmenu(submenuId, { text: formattedText });
         }
         
         delete state.state;
