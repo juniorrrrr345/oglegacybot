@@ -5,7 +5,7 @@
 // - 'sqlite' : Base de données SQLite (persistance sur VPS)
 // - 'd1' : Cloudflare D1 (pour déploiement sur Cloudflare Workers)
 
-const DB_TYPE = process.env.DB_TYPE || 'memory';
+const DB_TYPE = process.env.DB_TYPE || 'sqlite';
 
 // Configuration Cloudflare D1 (si utilisé)
 const D1_CONFIG = {
