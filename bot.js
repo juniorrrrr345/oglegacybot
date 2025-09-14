@@ -83,33 +83,38 @@ async function isAdmin(userId) {
     return user?.is_admin === 1;
 }
 
-// Fonction pour envoyer ou éditer un message
+// Fonction pour envoyer ou éditer un message (gère automatiquement les transitions photo/texte)
 async function sendOrEditMessage(chatId, text, keyboard = null, parseMode = 'HTML', messageId = null) {
     const options = {
         parse_mode: parseMode,
         reply_markup: keyboard ? { inline_keyboard: keyboard } : undefined
     };
 
-    try {
-        if (messageId) {
+    if (messageId) {
+        try {
             // Essayer d'éditer le message existant
             const result = await bot.editMessageText(text, {
                 chat_id: chatId,
                 message_id: messageId,
                 ...options
             });
-            return result;
+            // S'assurer qu'on retourne toujours un objet avec message_id
+            return result.message_id ? result : { message_id: messageId };
+        } catch (error) {
+            // Si l'édition échoue (probablement passage photo->texte), supprimer et recréer
+            try {
+                await bot.deleteMessage(chatId, messageId);
+            } catch (deleteError) {
+                // Ignorer si la suppression échoue
+            }
         }
-    } catch (error) {
-        // Si l'édition échoue, envoyer un nouveau message
-        console.log('Édition échouée, envoi d\'un nouveau message');
     }
 
     // Envoyer un nouveau message
     return await bot.sendMessage(chatId, text, options);
 }
 
-// Fonction pour envoyer une photo
+// Fonction pour envoyer une photo (gère automatiquement les transitions texte/photo)
 async function sendOrEditPhoto(chatId, photo, caption, keyboard = null, messageId = null) {
     const options = {
         caption: caption,
@@ -117,8 +122,8 @@ async function sendOrEditPhoto(chatId, photo, caption, keyboard = null, messageI
         reply_markup: keyboard ? { inline_keyboard: keyboard } : undefined
     };
 
-    try {
-        if (messageId) {
+    if (messageId) {
+        try {
             // Essayer d'éditer avec une nouvelle photo
             const result = await bot.editMessageMedia({
                 type: 'photo',
@@ -130,10 +135,16 @@ async function sendOrEditPhoto(chatId, photo, caption, keyboard = null, messageI
                 message_id: messageId,
                 reply_markup: keyboard ? { inline_keyboard: keyboard } : undefined
             });
-            return result || { message_id: messageId };
+            // S'assurer qu'on retourne toujours un objet avec message_id
+            return result && result.message_id ? result : { message_id: messageId };
+        } catch (error) {
+            // Si l'édition échoue (probablement passage texte->photo), supprimer et recréer
+            try {
+                await bot.deleteMessage(chatId, messageId);
+            } catch (deleteError) {
+                // Ignorer si la suppression échoue
+            }
         }
-    } catch (error) {
-        console.log('Édition de photo échouée, envoi d\'une nouvelle photo');
     }
 
     return await bot.sendPhoto(chatId, photo, options);
@@ -326,11 +337,15 @@ bot.on('callback_query', async (query) => {
             
             
             // Envoyer le message
+            let result;
             if (config.welcome_image) {
-                await sendOrEditPhoto(chatId, config.welcome_image, welcomeText, keyboard, messageId);
+                result = await sendOrEditPhoto(chatId, config.welcome_image, welcomeText, keyboard, messageId);
             } else {
-                await sendOrEditMessage(chatId, welcomeText, keyboard, 'HTML', messageId);
+                result = await sendOrEditMessage(chatId, welcomeText, keyboard, 'HTML', messageId);
             }
+            
+            // Mettre à jour le messageId dans l'état
+            userStates.set(userId, { ...state, messageId: result.message_id });
             break;
             
             
