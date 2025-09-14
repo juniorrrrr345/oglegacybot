@@ -809,6 +809,18 @@ async function handleOtherCallbacks(query) {
     
     // Callbacks pour l'ajout de photo au sous-menu
     else if (data === 'add_submenu_photo_yes') {
+        // Vérifier que les données nécessaires sont présentes
+        if (!state.submenuName || !state.submenuText || !state.serviceType) {
+            await sendOrEditMessage(
+                chatId,
+                '❌ Erreur: données du sous-menu perdues. Veuillez recommencer.',
+                [[{ text: '🔙 Retour', callback_data: 'admin_services' }]],
+                'HTML',
+                messageId
+            );
+            return;
+        }
+        
         userStates.set(userId, { ...state, state: 'adding_submenu_photo' });
         await sendOrEditMessage(
             chatId,
@@ -821,15 +833,23 @@ async function handleOtherCallbacks(query) {
     }
     
     else if (data === 'add_submenu_photo_no') {
+        // Vérifier que les données nécessaires sont présentes
+        if (!state.submenuName || !state.submenuText || !state.serviceType) {
+            await sendOrEditMessage(
+                chatId,
+                '❌ Erreur: données du sous-menu perdues. Veuillez recommencer.',
+                [[{ text: '🔙 Retour', callback_data: 'admin_services' }]],
+                'HTML',
+                messageId
+            );
+            return;
+        }
+        
         // Créer le sous-menu sans photo
         const fullServiceType = state.serviceType === 'liv' ? 'livraison' : 
                                state.serviceType === 'pos' ? 'postal' : 'meetup';
         
         await db.addSubmenu(fullServiceType, state.submenuName, state.submenuText, null);
-        delete state.state;
-        delete state.submenuName;
-        delete state.submenuText;
-        delete state.serviceType;
         
         await sendOrEditMessage(
             chatId,
@@ -1112,7 +1132,8 @@ bot.on('message', async (msg) => {
         // Sauvegarder le texte formaté
         const formattedText = parseMessageEntities(msg.text, msg.entities);
         state.submenuText = formattedText;
-        state.state = 'adding_submenu_photo_choice';
+        // Retirer l'état temporairement pour éviter que le bot pense encore attendre un texte
+        delete state.state;
         userStates.set(userId, state);
         
         // Demander si l'utilisateur veut ajouter une photo
