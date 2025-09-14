@@ -717,6 +717,62 @@ async function handleOtherCallbacks(query) {
         );
     }
     
+    // Callbacks pour l'ajout de photo au sous-menu - DOIT ÊTRE AVANT add_submenu_
+    else if (data === 'add_submenu_photo_yes') {
+        // Vérifier que les données nécessaires sont présentes
+        if (!state.submenuName || !state.submenuText || !state.serviceType) {
+            await sendOrEditMessage(
+                chatId,
+                '❌ Erreur: données du sous-menu perdues. Veuillez recommencer.',
+                [[{ text: '🔙 Retour', callback_data: 'admin_services' }]],
+                'HTML',
+                messageId
+            );
+            return;
+        }
+        
+        userStates.set(userId, { ...state, state: 'adding_submenu_photo' });
+        await sendOrEditMessage(
+            chatId,
+            '📷 <b>Envoyez la photo pour ce sous-menu</b>\n\n' +
+            '<i>Cette photo s\'affichera quand l\'utilisateur cliquera sur le sous-menu</i>',
+            [[{ text: '❌ Annuler', callback_data: `manage_submenus_${state.serviceType}` }]],
+            'HTML',
+            messageId
+        );
+    }
+    
+    else if (data === 'add_submenu_photo_no') {
+        // Vérifier que les données nécessaires sont présentes
+        if (!state.submenuName || !state.submenuText || !state.serviceType) {
+            await sendOrEditMessage(
+                chatId,
+                '❌ Erreur: données du sous-menu perdues. Veuillez recommencer.',
+                [[{ text: '🔙 Retour', callback_data: 'admin_services' }]],
+                'HTML',
+                messageId
+            );
+            return;
+        }
+        
+        // Créer le sous-menu sans photo
+        const fullServiceType = state.serviceType === 'liv' ? 'livraison' : 
+                               state.serviceType === 'pos' ? 'postal' : 'meetup';
+        
+        await db.addSubmenu(fullServiceType, state.submenuName, state.submenuText, null);
+        
+        await sendOrEditMessage(
+            chatId,
+            '✅ Sous-menu ajouté sans photo !',
+            [[{ text: '🔙 Retour', callback_data: 'admin_services' }]],
+            'HTML',
+            messageId
+        );
+        
+        // Nettoyer l'état
+        userStates.set(userId, { messageId: messageId });
+    }
+    
     // Ajouter un sous-menu
     else if (data.startsWith('add_submenu_')) {
         const serviceType = data.replace('add_submenu_', '');
@@ -805,62 +861,6 @@ async function handleOtherCallbacks(query) {
             'HTML',
             messageId
         );
-    }
-    
-    // Callbacks pour l'ajout de photo au sous-menu
-    else if (data === 'add_submenu_photo_yes') {
-        // Vérifier que les données nécessaires sont présentes
-        if (!state.submenuName || !state.submenuText || !state.serviceType) {
-            await sendOrEditMessage(
-                chatId,
-                '❌ Erreur: données du sous-menu perdues. Veuillez recommencer.',
-                [[{ text: '🔙 Retour', callback_data: 'admin_services' }]],
-                'HTML',
-                messageId
-            );
-            return;
-        }
-        
-        userStates.set(userId, { ...state, state: 'adding_submenu_photo' });
-        await sendOrEditMessage(
-            chatId,
-            '📷 <b>Envoyez la photo pour ce sous-menu</b>\n\n' +
-            '<i>Cette photo s\'affichera quand l\'utilisateur cliquera sur le sous-menu</i>',
-            [[{ text: '❌ Annuler', callback_data: `manage_submenus_${state.serviceType}` }]],
-            'HTML',
-            messageId
-        );
-    }
-    
-    else if (data === 'add_submenu_photo_no') {
-        // Vérifier que les données nécessaires sont présentes
-        if (!state.submenuName || !state.submenuText || !state.serviceType) {
-            await sendOrEditMessage(
-                chatId,
-                '❌ Erreur: données du sous-menu perdues. Veuillez recommencer.',
-                [[{ text: '🔙 Retour', callback_data: 'admin_services' }]],
-                'HTML',
-                messageId
-            );
-            return;
-        }
-        
-        // Créer le sous-menu sans photo
-        const fullServiceType = state.serviceType === 'liv' ? 'livraison' : 
-                               state.serviceType === 'pos' ? 'postal' : 'meetup';
-        
-        await db.addSubmenu(fullServiceType, state.submenuName, state.submenuText, null);
-        
-        await sendOrEditMessage(
-            chatId,
-            '✅ Sous-menu ajouté sans photo !',
-            [[{ text: '🔙 Retour', callback_data: 'admin_services' }]],
-            'HTML',
-            messageId
-        );
-        
-        // Nettoyer l'état
-        userStates.set(userId, { messageId: messageId });
     }
     
     // Ajouter un admin
