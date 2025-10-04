@@ -169,7 +169,7 @@ bot.onText(/\/start/, async (msg) => {
     const config = await db.getConfig();
     
     // Préparer le message d'accueil
-    const welcomeText = config.welcome_message.replace('{firstname}', firstName);
+    const welcomeText = (config.welcome_message || 'Bienvenue {firstname} !').replace('{firstname}', firstName);
     
     // Créer le clavier principal
     const keyboard = [];
