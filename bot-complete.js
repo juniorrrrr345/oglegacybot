@@ -158,8 +158,7 @@ bot.onText(/\/start/, async (msg) => {
         }]);
     }
     
-    // Services sur des lignes séparées
-    keyboard.push([{ text: '📮 Postal', callback_data: 'service_pos' }]);
+    // Services supprimés
     
     // Réseaux sociaux (un par ligne)
     const socialNetworks = await db.getSocialNetworks();
@@ -310,10 +309,7 @@ bot.on('callback_query', async (query) => {
             break;
             
             
-        // Services
-        case 'service_pos':
-            await showService(chatId, userId, 'postal', messageId);
-            break;
+        // Services supprimés
             
         // Admin
         case 'admin_back':
@@ -381,9 +377,8 @@ bot.on('callback_query', async (query) => {
                 await sendOrEditMessage(
                     chatId,
                     '🚚 <b>Gérer les Services</b>\n\n' +
-                    'Sélectionnez un service à configurer:',
+                    'Aucun service configuré.',
                     [
-                        [{ text: '📮 POSTAL', callback_data: 'edit_service_pos' }],
                         [{ text: '🔙 Retour', callback_data: 'admin_back' }]
                     ],
                     'HTML',
@@ -430,13 +425,7 @@ bot.on('callback_query', async (query) => {
             }
             break;
             
-        // Gestion des services détaillés
-        case 'edit_service_pos':
-            if (await isAdmin(userId)) {
-                const serviceType = data.replace('edit_service_', '');
-                await showServiceEditMenu(chatId, userId, serviceType, messageId);
-            }
-            break;
+        // Gestion des services supprimée
             
         // Autres callbacks
         default:

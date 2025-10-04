@@ -147,8 +147,7 @@ bot.onText(/\/start/, async (msg) => {
         }]);
     }
     
-    // Services sur des lignes séparées
-    keyboard.push([{ text: '📮 Postal', callback_data: 'service_pos' }]);
+    // Services supprimés
     
     // Réseaux sociaux (un par ligne)
     const socialNetworks = await db.getSocialNetworks();
