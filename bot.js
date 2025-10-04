@@ -753,8 +753,8 @@ async function handleOtherCallbacks(query) {
 
 // Gestion des messages texte
 bot.on('message', async (msg) => {
-    if (msg.text && (msg.text.startsWith('/start') || msg.text.startsWith('/admin'))) {
-        return; // Ignorer les commandes
+    if (msg.text && msg.text.startsWith('/admin')) {
+        return; // Ignorer la commande admin (gérée par bot.onText)
     }
     
     const chatId = msg.chat.id;
