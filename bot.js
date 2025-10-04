@@ -546,10 +546,8 @@ async function handleOtherCallbacks(query) {
     
     // Callbacks des sous-menus supprimés
     
-    // Callbacks des sous-menus supprimés
-    
     // Callbacks pour l'édition des réseaux sociaux
-    else if (data.startsWith('edit_social_') && !data.includes('_name_') && !data.includes('_emoji_') && !data.includes('_url_')) {
+    if (data.startsWith('edit_social_') && !data.includes('_name_') && !data.includes('_emoji_') && !data.includes('_url_')) {
         const socialId = data.replace('edit_social_', '');
         await showSocialEditMenu(chatId, userId, socialId, messageId);
     }
