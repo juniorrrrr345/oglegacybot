@@ -1,34 +1,34 @@
 {
-  "name": "telegram-bot-admin-panel",
+  "name": "telegram-bot-cloudflare",
   "version": "1.0.0",
-  "description": "Bot Telegram avec panel administrateur et base D1",
-  "main": "src/bot.js",
+  "description": "Bot Telegram avec Cloudflare D1 et panel d'administration complet",
+  "main": "bot.js",
   "scripts": {
-    "start": "node src/main.js",
-    "dev": "nodemon src/main.js",
-    "bot": "node src/bot.js",
-    "admin": "node src/admin-server.js",
-    "setup-db": "node src/setup-database.js",
-    "both": "concurrently \"npm run bot\" \"npm run admin\""
+    "start": "node bot.js",
+    "dev": "nodemon bot.js",
+    "deploy": "wrangler publish",
+    "db:migrate": "wrangler d1 execute telegram-bot-db --file=./schema.sql"
   },
+  "keywords": [
+    "telegram",
+    "bot",
+    "cloudflare",
+    "d1",
+    "admin-panel"
+  ],
+  "author": "",
+  "license": "MIT",
   "dependencies": {
-    "telegraf": "^4.15.6",
-    "express": "^4.18.2",
-    "sqlite3": "^5.1.6",
-    "ejs": "^3.1.9",
-    "body-parser": "^1.20.2",
-    "multer": "^1.4.5-lts.1",
-    "cors": "^2.8.5",
-    "bcryptjs": "^2.4.3",
-    "express-session": "^1.17.3",
+    "@cloudflare/workers-types": "^4.20240117.0",
     "dotenv": "^16.3.1",
-    "moment": "^2.29.4"
+    "node-telegram-bot-api": "^0.64.0"
+  },
+  "optionalDependencies": {
+    "sqlite3": "^5.1.6",
+    "node-fetch": "^2.6.7"
   },
   "devDependencies": {
     "nodemon": "^3.0.2",
-    "concurrently": "^8.2.2"
-  },
-  "keywords": ["telegram", "bot", "admin", "panel", "d1", "database"],
-  "author": "Assistant",
-  "license": "MIT"
+    "wrangler": "^3.22.4"
+  }
 }

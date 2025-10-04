@@ -1,162 +1,119 @@
-# 🤖 Bot Telegram avec Panel Administrateur
+# Bot Telegram avec Cloudflare D1
 
-Un système complet de bot Telegram avec interface d'administration web, utilisant une base de données Cloudflare D1.
+Bot Telegram complet avec panel d'administration et stockage sur Cloudflare D1.
 
-## 🌟 Fonctionnalités
+## 🚀 Fonctionnalités
 
-### Bot Telegram
-- ✅ Commande `/start` avec message personnalisable
-- ✅ Commande `/config` avec boutons modulaires
-- ✅ Gestion des réseaux sociaux
-- ✅ Messages de diffusion
-- ✅ Statistiques d'utilisation
+### Pour les utilisateurs (/start)
+- Message et photo d'accueil personnalisables
+- Mini application web
+- 3 services principaux : Livraison, Postal, Meet Up
+- Sous-menus pour chaque service
+- Réseaux sociaux configurables
+- Catalogue
 
-### Panel Administrateur
-- 🎨 Modifier le message d'accueil
+### Pour les administrateurs (/admin)
+- ✏️ Modifier le message d'accueil
 - 🖼️ Modifier la photo d'accueil
 - 📱 Configurer la mini application
-- 🌐 Gérer les réseaux sociaux
-- ℹ️ Modifier les informations du bot
-- 📢 Envoyer des messages à tous les utilisateurs
+- 🔗 Gérer les réseaux sociaux (nom, emoji, URL, ordre)
+- 📊 Statistiques du bot
 - 👥 Gérer les administrateurs
-- 📊 Voir les statistiques détaillées
+- 📢 Envoyer un message à tous
+- 🚚 Gérer les services et sous-menus
 
-## 🚀 Déploiement sur VPS
+## 📋 Prérequis
 
-### Prérequis
-- VPS avec Ubuntu/Debian
-- Nom de domaine pointant vers votre VPS
-- Token de bot Telegram (obtenu via @BotFather)
+- Node.js 18+
+- Compte Cloudflare avec Workers et D1
+- Bot Telegram (créé via @BotFather)
+- Wrangler CLI installé
 
-### Installation rapide
+## 🛠️ Installation
 
-1. **Cloner le projet**
-   ```bash
-   git clone <votre-repo>
-   cd telegram-bot-admin-panel
-   ```
+### 1. Cloner le repository
+```bash
+git clone https://github.com/votre-repo/telegram-bot-cloudflare.git
+cd telegram-bot-cloudflare
+```
 
-2. **Configuration**
-   ```bash
-   cp .env.example .env
-   nano .env  # Configurez vos variables
-   ```
-
-3. **Déploiement automatique**
-   ```bash
-   chmod +x deploy.sh
-   ./deploy.sh production
-   ```
-
-### Configuration manuelle
-
-1. **Variables d'environnement (.env)**
-   ```env
-   TELEGRAM_BOT_TOKEN=votre_token_bot
-   ADMIN_USERNAME=admin
-   ADMIN_PASSWORD=votre_mot_de_passe_securise
-   DOMAIN=votre-domaine.com
-   ```
-
-2. **Démarrage avec Docker**
-   ```bash
-   docker-compose up -d
-   ```
-
-3. **Vérification**
-   ```bash
-   docker-compose logs -f
-   ```
-
-## 🔧 Configuration
-
-### Nginx et SSL
-- Modifiez `nginx/conf.d/bot-admin.conf`
-- Pour SSL, placez vos certificats dans `./ssl/`
-- Redémarrez nginx: `docker-compose restart nginx`
-
-### Base de données
-- Base D1 Cloudflare: `fe5c3cd2-78a5-41c5-92b9-0d8648e61c22` (nom: botog)
-- Sauvegarde locale dans `./data/`
-
-## 📱 Utilisation
-
-### Accès au panel admin
-- URL: `http://votre-domaine.com` ou `http://IP:3000`
-- Login: `admin` (ou votre ADMIN_USERNAME)
-- Password: votre ADMIN_PASSWORD
-
-### Commandes du bot
-- `/start` - Message d'accueil
-- `/config` - Panel de configuration avec boutons
-
-## 🛠️ Développement
-
-### Installation locale
+### 2. Installer les dépendances
 ```bash
 npm install
-cp .env.example .env
-npm run setup-db
+```
+
+### 3. Configurer Cloudflare D1
+```bash
+# Créer la base de données
+wrangler d1 create telegram-bot-db
+
+# Exécuter les migrations
+wrangler d1 execute telegram-bot-db --file=./schema.sql
+```
+
+### 4. Configuration
+Créer un fichier `.env` :
+```env
+BOT_TOKEN=votre_token_telegram
+ADMIN_ID=votre_id_telegram
+CLOUDFLARE_ACCOUNT_ID=votre_account_id
+CLOUDFLARE_DATABASE_ID=votre_database_id
+```
+
+### 5. Déploiement
+```bash
+# En développement
 npm run dev
+
+# En production (Cloudflare Workers)
+npm run deploy
 ```
 
-### Structure du projet
-```
-├── src/
-│   ├── bot.js              # Bot Telegram principal
-│   ├── admin-server.js     # Serveur web admin
-│   ├── database.js         # Gestion base de données
-│   └── setup-database.js   # Initialisation DB
-├── views/                  # Templates EJS
-├── public/                 # Assets statiques
-├── nginx/                  # Configuration Nginx
-├── data/                   # Base de données locale
-├── uploads/                # Fichiers uploadés
-└── logs/                   # Logs applicatifs
-```
+## 🗄️ Structure de la base de données
 
-## 🔒 Sécurité
+La base de données D1 contient :
+- Configuration du bot
+- Utilisateurs
+- Réseaux sociaux
+- Services et sous-menus
+- Statistiques
 
-- Changez tous les mots de passe par défaut
-- Utilisez HTTPS en production
-- Sauvegardez régulièrement `./data/`
-- Limitez l'accès SSH à votre VPS
+## 📝 Utilisation
 
-## 📊 Monitoring
+### Commandes disponibles
+- `/start` - Menu principal
+- `/admin` - Panel d'administration (réservé aux admins)
 
-### Logs
+### Panel Admin
+1. **Message d'accueil** : Modifier le texte avec {firstname} pour le prénom
+2. **Photo d'accueil** : Envoyer une nouvelle photo
+3. **Mini App** : Configurer l'URL et le texte du bouton
+4. **Réseaux sociaux** : Ajouter, modifier, supprimer, réorganiser
+5. **Services** : Gérer les textes, photos et sous-menus
+6. **Broadcast** : Envoyer un message à tous les utilisateurs
+
+## 🔧 Personnalisation
+
+Pour ajouter un nouveau service :
+1. Modifier `config.js` pour ajouter les champs
+2. Ajouter les handlers dans `bot.js`
+3. Mettre à jour le schema SQL
+
+## 📦 Déploiement sur VPS
+
+Si vous préférez un déploiement sur VPS :
 ```bash
-# Logs du bot
-docker-compose logs telegram-bot
-
-# Logs nginx
-docker-compose logs nginx
-
-# Logs en temps réel
-docker-compose logs -f
+# Utiliser PM2
+npm install -g pm2
+pm2 start bot.js --name "telegram-bot"
+pm2 save
+pm2 startup
 ```
 
-### Redémarrage
-```bash
-# Redémarrage complet
-docker-compose restart
+## 🤝 Contribution
 
-# Redémarrage du bot uniquement
-docker-compose restart telegram-bot
-```
-
-## 🆘 Dépannage
-
-### Problèmes courants
-1. **Bot ne répond pas**: Vérifiez le token dans `.env`
-2. **Panel inaccessible**: Vérifiez les ports ouverts (80, 443)
-3. **Base de données**: Vérifiez `./data/bot_config.db`
-
-### Support
-- Logs: `docker-compose logs`
-- Status: `docker-compose ps`
-- Shell: `docker-compose exec telegram-bot sh`
+Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou un PR.
 
 ## 📄 Licence
 
-MIT License - Libre d'utilisation et modification.
+MIT
