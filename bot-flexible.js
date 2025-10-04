@@ -148,9 +148,7 @@ bot.onText(/\/start/, async (msg) => {
     }
     
     // Services sur des lignes séparées
-    keyboard.push([{ text: '🚚 Livraison', callback_data: 'service_liv' }]);
     keyboard.push([{ text: '📮 Postal', callback_data: 'service_pos' }]);
-    keyboard.push([{ text: '📍 Meet Up', callback_data: 'service_meet' }]);
     
     // Réseaux sociaux (un par ligne)
     const socialNetworks = await db.getSocialNetworks();

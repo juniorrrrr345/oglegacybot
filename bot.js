@@ -183,9 +183,7 @@ bot.onText(/\/start/, async (msg) => {
     }
     
     // Services sur des lignes séparées
-    keyboard.push([{ text: '🚚 Livraison', callback_data: 'service_liv' }]);
     keyboard.push([{ text: '📮 Postal', callback_data: 'service_pos' }]);
-    keyboard.push([{ text: '📍 Meet Up', callback_data: 'service_meet' }]);
     
     // Réseaux sociaux (un par ligne)
     const socialNetworks = await db.getSocialNetworks();
@@ -350,16 +348,8 @@ bot.on('callback_query', async (query) => {
             
             
         // Services
-        case 'service_liv':
-            await showService(chatId, userId, 'livraison', messageId);
-            break;
-            
         case 'service_pos':
             await showService(chatId, userId, 'postal', messageId);
-            break;
-            
-        case 'service_meet':
-            await showService(chatId, userId, 'meetup', messageId);
             break;
             
         // Admin
@@ -431,9 +421,7 @@ bot.on('callback_query', async (query) => {
                     '🚚 <b>Gérer les Services</b>\n\n' +
                     'Sélectionnez un service à configurer:',
                     [
-                        [{ text: '🚚 LIVRAISON', callback_data: 'edit_service_liv' }],
                         [{ text: '📮 POSTAL', callback_data: 'edit_service_pos' }],
-                        [{ text: '📍 MEET UP', callback_data: 'edit_service_meet' }],
                         [{ text: '🔙 Retour', callback_data: 'admin_back' }]
                     ],
                     'HTML',
@@ -481,9 +469,7 @@ bot.on('callback_query', async (query) => {
             break;
             
         // Gestion des services détaillés
-        case 'edit_service_liv':
         case 'edit_service_pos':
-        case 'edit_service_meet':
             if (await isAdmin(userId)) {
                 const serviceType = data.replace('edit_service_', '');
                 await showServiceEditMenu(chatId, userId, serviceType, messageId);
@@ -504,17 +490,9 @@ async function showService(chatId, userId, serviceType, messageId) {
     
     let text, image;
     switch(serviceType) {
-        case 'livraison':
-            text = config.livraison_text;
-            image = config.livraison_image;
-            break;
         case 'postal':
             text = config.postal_text;
             image = config.postal_image;
-            break;
-        case 'meetup':
-            text = config.meetup_text;
-            image = config.meetup_image;
             break;
     }
     
@@ -545,11 +523,9 @@ async function showService(chatId, userId, serviceType, messageId) {
 
 // Afficher le menu d'édition d'un service
 async function showServiceEditMenu(chatId, userId, serviceType, messageId) {
-    const serviceName = serviceType === 'liv' ? 'LIVRAISON' : 
-                       serviceType === 'pos' ? 'POSTAL' : 'MEET UP';
+    const serviceName = serviceType === 'pos' ? 'POSTAL' : 'POSTAL';
                        
-    const fullServiceType = serviceType === 'liv' ? 'livraison' : 
-                           serviceType === 'pos' ? 'postal' : 'meetup';
+    const fullServiceType = serviceType === 'pos' ? 'postal' : 'postal';
     
     await sendOrEditMessage(
         chatId,
@@ -756,8 +732,7 @@ async function handleOtherCallbacks(query) {
         }
         
         // Créer le sous-menu sans photo
-        const fullServiceType = state.serviceType === 'liv' ? 'livraison' : 
-                               state.serviceType === 'pos' ? 'postal' : 'meetup';
+        const fullServiceType = state.serviceType === 'pos' ? 'postal' : 'postal';
         
         await db.addSubmenu(fullServiceType, state.submenuName, state.submenuText, null);
         
@@ -1024,8 +999,7 @@ bot.on('message', async (msg) => {
     // Gestion des textes des services
     else if (state.state.startsWith('waiting_service_text_')) {
         const serviceType = state.state.replace('waiting_service_text_', '');
-        const field = serviceType === 'liv' ? 'livraison_text' :
-                     serviceType === 'pos' ? 'postal_text' : 'meetup_text';
+        const field = serviceType === 'pos' ? 'postal_text' : 'postal_text';
         
         // Convertir les entités Telegram en HTML
         const formattedText = parseMessageEntities(msg.text, msg.entities);
@@ -1290,8 +1264,7 @@ bot.on('photo', async (msg) => {
     // Photos des services
     else if (state.state.startsWith('waiting_service_photo_')) {
         const serviceType = state.state.replace('waiting_service_photo_', '');
-        const field = serviceType === 'liv' ? 'livraison_image' :
-                     serviceType === 'pos' ? 'postal_image' : 'meetup_image';
+        const field = serviceType === 'pos' ? 'postal_image' : 'postal_image';
         
         await db.updateConfig({ [field]: photo });
         delete state.state;
@@ -1322,8 +1295,7 @@ bot.on('photo', async (msg) => {
     
     // Photo d'un sous-menu (création)
     else if (state.state === 'adding_submenu_photo') {
-        const fullServiceType = state.serviceType === 'liv' ? 'livraison' : 
-                               state.serviceType === 'pos' ? 'postal' : 'meetup';
+        const fullServiceType = state.serviceType === 'pos' ? 'postal' : 'postal';
         
         await db.addSubmenu(fullServiceType, state.submenuName, state.submenuText, photo);
         delete state.state;
@@ -1346,8 +1318,7 @@ bot.on('photo', async (msg) => {
 
 // Gestion des sous-menus
 async function showSubmenuManagement(chatId, userId, serviceType, messageId) {
-    const fullServiceType = serviceType === 'liv' ? 'livraison' : 
-                           serviceType === 'pos' ? 'postal' : 'meetup';
+    const fullServiceType = serviceType === 'pos' ? 'postal' : 'postal';
     const submenus = await db.getServiceSubmenus(fullServiceType);
     
     const keyboard = [];
@@ -1391,14 +1362,8 @@ async function showSubmenuContent(chatId, userId, submenuId, messageId) {
     // Déterminer le bon callback pour le retour
     let serviceCallback;
     switch(submenu.service_type) {
-        case 'livraison':
-            serviceCallback = 'service_liv';
-            break;
         case 'postal':
             serviceCallback = 'service_pos';
-            break;
-        case 'meetup':
-            serviceCallback = 'service_meet';
             break;
         default:
             serviceCallback = 'back_to_start';
